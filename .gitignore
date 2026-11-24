@@ -1,0 +1,27 @@
+# ---- 构建产物 ----
+**/bin/
+**/obj/
+dist/
+
+# ---- 打包/归档 ----
+*.zip
+*.7z
+*.rar
+
+# ---- 本地文档与旧版（不入库）----
+WINNAS-handoff/
+WINNAS-交接单-*.md
+shot-*.png
+tools/
+
+# ---- 本地凭据（不要提交）----
+WINNAS-handoff/WINNAS/config.json
+
+# ---- 本地助手缓存/工作记录（非项目内容）----
+.workbuddy/
+
+# ---- 本地产物 ----
+*.user
+*.suo
+.vs/
+Thumbs.db

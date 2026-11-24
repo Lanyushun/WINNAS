@@ -1,0 +1,681 @@
+<UserControl x:Class="Winnas.Console.Views.BackupView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource PageBgBrush}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="22,18,22,22">
+
+            <Border Style="{StaticResource HintBar}" Margin="0,0,0,12"
+                    Visibility="{Binding HelpVisible, Converter={StaticResource BoolVis}}">
+                <TextBlock Text="{Binding HelpText, Mode=OneWay}" Style="{StaticResource HintBarText}"/>
+            </Border>
+
+            <Border Background="{DynamicResource DangerSoftBrush}" BorderBrush="{DynamicResource DangerBorderBrush}" BorderThickness="1" CornerRadius="8"
+                    Padding="12,10" Margin="0,0,0,12"
+                    Visibility="{Binding Error, Converter={StaticResource StrVis}}">
+                <TextBlock Text="{Binding Error}" Foreground="{DynamicResource DangerDarkBrush}" FontSize="12" TextWrapping="Wrap"/>
+            </Border>
+
+            <Border Background="{DynamicResource SuccessSoftBrush}" BorderBrush="{DynamicResource SuccessBorderBrush}" BorderThickness="1" CornerRadius="8"
+                    Padding="12,10" Margin="0,0,0,12"
+                    Visibility="{Binding Notice, Converter={StaticResource StrVis}}">
+                <TextBlock Text="{Binding Notice}" Foreground="{DynamicResource SuccessBrush}" FontSize="12" TextWrapping="Wrap"/>
+            </Border>
+
+            <!-- ================================================= plans list -->
+            <Border Style="{StaticResource Card}" Padding="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Padding="16,12" BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid>
+                            <TextBlock Text="备份计划" Style="{StaticResource CardTitle}" VerticalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="新建" Style="{StaticResource PrimaryButton}"
+                                        Command="{Binding NewPlanCommand}" MinWidth="70" Margin="0,0,6,0"/>
+                                <Button Content="复制" Style="{StaticResource DefaultButton}"
+                                        Command="{Binding DuplicatePlanCommand}" MinWidth="70" Margin="0,0,6,0"/>
+                                <Button Content="删除" Style="{StaticResource DangerButton}"
+                                        Command="{Binding DeletePlanCommand}" MinWidth="70" Margin="0,0,6,0"/>
+                                <Button Content="编辑面板" Style="{StaticResource LinkButton}"
+                                        Command="{Binding ToggleEditorCommand}"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Row="1" Style="{StaticResource EmptyState}" Margin="16,14,16,4"
+                            Visibility="{Binding HasPlan, Converter={StaticResource InvertBool}}">
+                        <StackPanel>
+                            <TextBlock Text="还没有备份计划" FontSize="13.5" FontWeight="SemiBold"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Text="点右上角「新建」，填源目录与目标目录 → 检查 → 预演 → 执行。"
+                                       FontSize="12" Foreground="{DynamicResource TextMutedBrush}"
+                                       Margin="0,6,0,0" HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding Plans}"
+                              Visibility="{Binding HasPlan, Converter={StaticResource BoolVis}}"
+                              SelectedItem="{Binding Selected, Mode=TwoWay}"
+                              MaxHeight="220" BorderThickness="0" SelectionMode="Single"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              HeadersVisibility="Column">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="名称" Binding="{Binding Name}" Width="130"/>
+                            <DataGridTemplateColumn Header="源 → 目标" Width="*">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock TextTrimming="CharacterEllipsis" FontSize="12"
+                                                   VerticalAlignment="Center">
+                                            <TextBlock.ToolTip>
+                                                <ToolTip Content="{Binding Summary}"/>
+                                            </TextBlock.ToolTip>
+                                            <Run Text="{Binding Source, Mode=OneWay}"/>
+                                            <Run Text=" → "/>
+                                            <Run Text="{Binding Target, Mode=OneWay}"/>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="模式" Binding="{Binding ModeText}" Width="82"/>
+                            <DataGridTextColumn Header="频率" Binding="{Binding FrequencyText}" Width="110"/>
+                            <DataGridTextColumn Header="保留" Binding="{Binding RetentionText}" Width="96"/>
+                            <DataGridTextColumn Header="状态" Binding="{Binding StatusText}" Width="80"/>
+                            <DataGridTextColumn Header="上次成功" Binding="{Binding LastSuccessText}" Width="96"/>
+                            <DataGridTextColumn Header="定时任务" Binding="{Binding ScheduledText}" Width="76"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <TextBlock Grid.Row="2" Margin="16,10,16,12" FontSize="11.5"
+                               Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap">
+                        <Run Text="选中一行后在下方面板里配置。"/>
+                        <Run Text="「状态」为已逾期表示超过了该频率应有的间隔还没成功执行过一次。"/>
+                    </TextBlock>
+                </Grid>
+            </Border>
+
+            <!-- ==================================================== editor -->
+            <Border Style="{StaticResource Card}" Margin="0,12,0,0" Padding="18,16"
+                    Visibility="{Binding HasPlan, Converter={StaticResource BoolVis}}">
+                <StackPanel>
+                    <Grid>
+                        <TextBlock Text="计划配置" Style="{StaticResource CardTitle}" VerticalAlignment="Center"/>
+                        <Button Content="收起 / 展开" Style="{StaticResource LinkButton}"
+                                HorizontalAlignment="Right" Command="{Binding ToggleEditorCommand}"/>
+                    </Grid>
+
+                    <StackPanel Visibility="{Binding EditorVisible, Converter={StaticResource BoolVis}}"
+                                Margin="0,12,0,0">
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="22"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- left column -->
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="基本" Style="{StaticResource SectionTitle}"/>
+
+                            <TextBlock Text="计划名称" Style="{StaticResource FieldLabel}" Margin="0,8,0,0"/>
+                            <TextBox Text="{Binding Selected.Name, UpdateSourceTrigger=PropertyChanged}"/>
+
+                            <CheckBox Content="启用该计划" Margin="0,10,0,0"
+                                      IsChecked="{Binding Selected.Enabled}"/>
+
+                            <TextBlock Text="源目录（目标机本地路径）" Style="{StaticResource FieldLabel}" Margin="0,12,0,0"/>
+                            <TextBox Text="{Binding Selected.Source}"/>
+
+                            <TextBlock Text="目标目录（目标机本地路径）" Style="{StaticResource FieldLabel}" Margin="0,10,0,0"/>
+                            <TextBox Text="{Binding Selected.Target}"/>
+
+                            <TextBlock Text="复制模式" Style="{StaticResource FieldLabel}" Margin="0,12,0,0"/>
+                            <ComboBox SelectedIndex="{Binding Selected.Mode}">
+                                <ComboBoxItem Content="镜像 /MIR（目标与源完全一致）"/>
+                                <ComboBoxItem Content="累积 /E（只增不删，误删可保）"/>
+                                <ComboBoxItem Content="版本目录（每次一份，可回历史）"/>
+                            </ComboBox>
+                            <TextBlock Text="{Binding Selected.ModeHint, Mode=OneWay}"
+                                       Style="{StaticResource CardHint}" Margin="0,4,0,0"/>
+
+                            <TextBlock Text="执行频率" Style="{StaticResource FieldLabel}" Margin="0,12,0,0"/>
+                            <ComboBox SelectedIndex="{Binding Selected.Frequency}">
+                                <ComboBoxItem Content="每天"/>
+                                <ComboBoxItem Content="每周"/>
+                                <ComboBoxItem Content="每月"/>
+                                <ComboBoxItem Content="仅手动"/>
+                            </ComboBox>
+
+                            <Grid Margin="0,10,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="时" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding Selected.Hour}" Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="分" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding Selected.Minute}" Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="4">
+                                    <TextBlock Text="超时(分钟)" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding Selected.MaxMinutes}" Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <StackPanel Margin="0,10,0,0">
+                                <TextBlock Text="星期（每周模式）" Style="{StaticResource FieldLabel}"/>
+                                <ComboBox SelectedIndex="{Binding Selected.DayOfWeek}" Margin="0,4,0,0">
+                                    <ComboBoxItem Content="周日"/>
+                                    <ComboBoxItem Content="周一"/>
+                                    <ComboBoxItem Content="周二"/>
+                                    <ComboBoxItem Content="周三"/>
+                                    <ComboBoxItem Content="周四"/>
+                                    <ComboBoxItem Content="周五"/>
+                                    <ComboBoxItem Content="周六"/>
+                                </ComboBox>
+                                <TextBlock Text="日期（每月模式，1–31）" Style="{StaticResource FieldLabel}" Margin="0,8,0,0"/>
+                                <TextBox Text="{Binding Selected.DayOfMonth}" Margin="0,4,0,0"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- right column -->
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="robocopy 选项" Style="{StaticResource SectionTitle}"/>
+
+                            <Grid Margin="0,8,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="线程数 /MT" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding Selected.Threads}" Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="限速 /IPG(ms)" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding Selected.ThrottleMs}" Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid Margin="0,8,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="重试 /R" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding Selected.Retries}" Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="等待 /W(秒)" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding Selected.WaitSeconds}" Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <TextBlock Text="排除目录 /XD（逗号分隔）" Style="{StaticResource FieldLabel}" Margin="0,10,0,0"/>
+                            <TextBox Text="{Binding Selected.ExcludeDirs}" Margin="0,4,0,0"/>
+
+                            <TextBlock Text="排除文件 /XF（逗号分隔）" Style="{StaticResource FieldLabel}" Margin="0,8,0,0"/>
+                            <TextBox Text="{Binding Selected.ExcludeFiles}" Margin="0,4,0,0"/>
+
+                            <TextBlock Text="附加参数（高级）" Style="{StaticResource FieldLabel}" Margin="0,8,0,0"/>
+                            <TextBox Text="{Binding Selected.ExtraArgs}" Margin="0,4,0,0"/>
+
+                            <CheckBox Content="复制安全描述符 /SEC" Margin="0,10,0,0"
+                                      IsChecked="{Binding Selected.CopySecurity}"/>
+                            <CheckBox Content="执行前先建卷影副本（镜像模式强烈建议）" Margin="0,6,0,0"
+                                      IsChecked="{Binding Selected.SnapshotFirst}"/>
+
+                            <TextBlock Text="保留策略（仅版本目录模式）" Style="{StaticResource SectionTitle}" Margin="0,14,0,0"/>
+                            <Grid Margin="0,8,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="10"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="日" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding Selected.KeepDays}" Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="周" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding Selected.KeepWeeks}" Margin="0,4,0,0"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="4">
+                                    <TextBlock Text="月" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Text="{Binding Selected.KeepMonths}" Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <TextBlock Text="执行前置条件" Style="{StaticResource SectionTitle}" Margin="0,14,0,0"/>
+                            <TextBlock Text="目标剩余空间下限（%）" Style="{StaticResource FieldLabel}" Margin="0,8,0,0"/>
+                            <TextBox Text="{Binding Selected.MinFreePercent}" Margin="0,4,0,0"/>
+                            <CheckBox Content="已有 robocopy 在跑就跳过" Margin="0,8,0,0"
+                                      IsChecked="{Binding Selected.SkipIfRunning}"/>
+                            <CheckBox Content="使用电池时跳过" Margin="0,6,0,0"
+                                      IsChecked="{Binding Selected.SkipOnBattery}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,16,0,12"/>
+
+                    <TextBlock Text="生成的命令" Style="{StaticResource FieldLabel}"/>
+                    <TextBox Text="{Binding CommandPreview, Mode=OneWay}" IsReadOnly="True"
+                             FontFamily="Consolas" FontSize="12" Background="{DynamicResource RowAltBrush}"
+                             Margin="0,4,0,0" TextWrapping="Wrap"
+                             MaxHeight="70" VerticalScrollBarVisibility="Auto"/>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                        <Button Content="保存" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding SavePlanCommand}" MinWidth="76" Margin="0,0,8,0"/>
+                        <Button Content="检查" Style="{StaticResource DefaultButton}"
+                                Command="{Binding CheckAsyncCommand}" MinWidth="76" Margin="0,0,8,0"/>
+                        <Button Content="预演" Style="{StaticResource DefaultButton}"
+                                Command="{Binding DryRunAsyncCommand}" MinWidth="76" Margin="0,0,8,0"
+                                IsEnabled="{Binding Running, Converter={StaticResource InvertBool}}"/>
+                        <Button Content="立即执行" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding ExecuteAsyncCommand}" MinWidth="90" Margin="0,0,8,0"
+                                IsEnabled="{Binding Running, Converter={StaticResource InvertBool}}"/>
+                        <Button Content="停止" Style="{StaticResource DangerButton}"
+                                Command="{Binding CancelRunCommand}" MinWidth="70" Margin="0,0,8,0"
+                                Visibility="{Binding Running, Converter={StaticResource BoolVis}}"/>
+                        <Button Content="注册定时" Style="{StaticResource DefaultButton}"
+                                Command="{Binding RegisterCommand}" MinWidth="90" Margin="0,0,8,0"
+                                IsEnabled="{Binding IsManual, Converter={StaticResource InvertBool}}"/>
+                        <Button Content="注销定时" Style="{StaticResource DefaultButton}"
+                                Command="{Binding UnregisterCommand}" MinWidth="90" Margin="0,0,8,0"/>
+                        <Button Content="导出脚本" Style="{StaticResource LinkButton}"
+                                Command="{Binding ExportScriptCommand}"/>
+                    </StackPanel>
+
+                    <TextBlock Text="远程主机上的执行依赖管理员权限：程序通过 CIM 在目标机创建 robocopy 进程，日志写到目标机的 ProgramData 下再读回。"
+                               Style="{StaticResource CardHint}" Margin="0,10,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- ================================================ preflight -->
+            <Border Style="{StaticResource Card}" Margin="0,12,0,0" Padding="0"
+                    Visibility="{Binding HasChecks, Converter={StaticResource BoolVis}}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Padding="16,12" BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid>
+                            <TextBlock Text="执行前检查" Style="{StaticResource CardTitle}" VerticalAlignment="Center"/>
+                            <Border HorizontalAlignment="Right" CornerRadius="10" Padding="9,3"
+                                    Background="{DynamicResource DangerSoftBrush}"
+                                    Visibility="{Binding HasBlocking, Converter={StaticResource BoolVis}}">
+                                <TextBlock Text="有阻止项，不会执行" FontSize="11" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource DangerDarkBrush}"/>
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <ItemsControl Grid.Row="1" ItemsSource="{Binding Checks}" Margin="14,10,14,12">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="52"/>
+                                        <ColumnDefinition Width="130"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Grid.Column="0" CornerRadius="4" Padding="0,2" HorizontalAlignment="Left" Width="46">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="{DynamicResource SuccessSoftBrush}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Ok}" Value="False">
+                                                        <Setter Property="Background" Value="{DynamicResource DangerSoftBrush}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="{Binding LevelText}" FontSize="11" FontWeight="SemiBold"
+                                                   HorizontalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Ok}" Value="False">
+                                                            <Setter Property="Foreground" Value="{DynamicResource DangerDarkBrush}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Border>
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}" FontSize="12.5"
+                                               FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding Detail}" FontSize="12"
+                                               Foreground="{DynamicResource TextMutedBrush}"
+                                               TextWrapping="Wrap" VerticalAlignment="Center"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </Border>
+
+            <!-- =================================================== output -->
+            <Border Style="{StaticResource Card}" Margin="0,12,0,0" Padding="0"
+                    Visibility="{Binding HasOutput, Converter={StaticResource BoolVis}}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Padding="16,12" BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid>
+                            <TextBlock Text="执行输出" Style="{StaticResource CardTitle}" VerticalAlignment="Center"/>
+                            <Button Content="清空" Style="{StaticResource LinkButton}"
+                                    HorizontalAlignment="Right" Command="{Binding ClearOutputCommand}"/>
+                        </Grid>
+                    </Border>
+
+                    <ListBox x:Name="OutputList" Grid.Row="1" ItemsSource="{Binding Output}"
+                             MaxHeight="260" BorderThickness="0" Padding="12,8"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" FontFamily="Consolas" FontSize="11.5"
+                                           TextWrapping="Wrap"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+
+            <!-- ================================================== history -->
+            <Border Style="{StaticResource Card}" Margin="0,12,0,0" Padding="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Padding="16,12" BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid>
+                            <TextBlock Text="执行历史" Style="{StaticResource CardTitle}" VerticalAlignment="Center"/>
+                            <CheckBox Content="只看当前计划" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                      IsChecked="{Binding OnlyCurrent}"/>
+                        </Grid>
+                    </Border>
+
+                    <TextBlock Grid.Row="1" Text="还没有执行记录。预演和执行都会记在这里。"
+                               FontSize="12" Foreground="{DynamicResource TextMutedBrush}"
+                               Margin="18,14" TextWrapping="Wrap"
+                               Visibility="{Binding HasHistory, Converter={StaticResource InvertBool}}"/>
+
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding History}" MaxHeight="240"
+                              Visibility="{Binding HasHistory, Converter={StaticResource BoolVis}}"
+                              BorderThickness="0" AutoGenerateColumns="False" IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="时间" Binding="{Binding StartedText}" Width="120"/>
+                            <DataGridTextColumn Header="计划" Binding="{Binding PlanName}" Width="120"/>
+                            <DataGridTextColumn Header="类型" Binding="{Binding KindText}" Width="60"/>
+                            <DataGridTextColumn Header="结果" Binding="{Binding ResultText}" Width="90"/>
+                            <DataGridTextColumn Header="文件" Binding="{Binding Files}" Width="80"/>
+                            <DataGridTextColumn Header="大小" Binding="{Binding SizeText}" Width="90"/>
+                            <DataGridTextColumn Header="耗时" Binding="{Binding DurationText}" Width="90"/>
+                            <DataGridTextColumn Header="说明" Binding="{Binding Message}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <!-- ============================================= legacy monitor -->
+            <Border Style="{StaticResource Card}" Padding="18,14" Margin="0,12,0,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding Info.Task.Path, FallbackValue='未配置备份任务'}"
+                                   FontSize="15" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <Border CornerRadius="10" Padding="9,3" Margin="0,0,8,0">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Info.Task.State}" Value="4">
+                                                <Setter Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Info.Task.State}" Value="3">
+                                                <Setter Property="Background" Value="{DynamicResource SuccessBrush}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Info.Task.State}" Value="1">
+                                                <Setter Property="Background" Value="{DynamicResource TextMutedBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="{Binding Info.Task.StateText, FallbackValue='未知'}"
+                                           FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextOnPrimaryBrush}"/>
+                            </Border>
+
+                            <Border CornerRadius="10" Padding="9,3" Background="{DynamicResource WarningSoftBrush}" Margin="0,0,8,0"
+                                    Visibility="{Binding Info.RobocopyRunning, Converter={StaticResource BoolVis}}">
+                                <TextBlock Text="robocopy 正在运行" FontSize="11" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource WarningTextBrush}"/>
+                            </Border>
+
+                            <TextBlock FontSize="12" Foreground="{DynamicResource TextMutedBrush}"
+                                       VerticalAlignment="Center">
+                                <Run Text="上次 "/>
+                                <Run Text="{Binding Info.Task.LastRun, Converter={StaticResource Date}, FallbackValue='—', Mode=OneWay}"/>
+                                <Run Text=" ｜ 下次 "/>
+                                <Run Text="{Binding Info.Task.NextRun, Converter={StaticResource Date}, FallbackValue='—', Mode=OneWay}"/>
+                                <Run Text=" ｜ 结果 "/>
+                                <Run Text="{Binding Info.Task.ResultText, FallbackValue='—', Mode=OneWay}"/>
+                            </TextBlock>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="立即执行" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding RunTaskCommand}" Margin="0,0,8,0" MinWidth="90"/>
+                        <Button Content="统计源目录" Style="{StaticResource DefaultButton}"
+                                Command="{Binding MeasureSourceCommand}"
+                                IsEnabled="{Binding Measuring, Converter={StaticResource InvertBool}}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Border Background="{DynamicResource WarningSoftBrush}" BorderBrush="{DynamicResource WarningBorderBrush}" BorderThickness="1" CornerRadius="8"
+                    Padding="12,10" Margin="0,12,0,0"
+                    Visibility="{Binding Measuring, Converter={StaticResource BoolVis}}">
+                <TextBlock Text="正在遍历源目录（远程时经 SMB 遍历，可能持续数分钟）..."
+                           FontSize="12" Foreground="{DynamicResource WarningTextBrush}"/>
+            </Border>
+
+            <!-- ================================== source + volumes + logs -->
+            <Grid Margin="0,12,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource Card}" Padding="18,14">
+                    <StackPanel>
+                        <TextBlock Text="源目录" Style="{StaticResource CardTitle}"/>
+
+                        <TextBlock Margin="0,10,0,0" FontSize="13">
+                            <Run Text="文件数 "/>
+                            <Run Text="{Binding Info.SourceFiles, FallbackValue='—', Mode=OneWay}"
+                                 FontWeight="SemiBold" FontSize="16"/>
+                            <Run Text=" ｜ 大小 "/>
+                            <Run Text="{Binding Info.SourceBytes, Converter={StaticResource Bytes}, FallbackValue='—', Mode=OneWay}"
+                                 FontWeight="SemiBold" FontSize="16"/>
+                        </TextBlock>
+
+                        <TextBlock Text="点「统计源目录」才会扫描；robocopy 运行期间不重复扫描。"
+                                   Style="{StaticResource CardHint}" Margin="0,8,0,0"/>
+
+                        <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,14,0,12"/>
+
+                        <TextBlock Text="卷容量（复制目标）" Style="{StaticResource CardTitle}"/>
+                        <ItemsControl ItemsSource="{Binding Info.Volumes}" Margin="0,10,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="42"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="150"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding Drive}" FontSize="12.5"
+                                                   FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                        <ProgressBar Grid.Column="1" Value="{Binding UsedRatio, Mode=OneWay}" Maximum="1"
+                                                     Style="{StaticResource ThinBar}" Height="8"
+                                                     Margin="10,0,14,0" VerticalAlignment="Center"
+                                                     Foreground="{Binding UsedRatio, Converter={StaticResource UsageBrush}}"/>
+                                        <TextBlock Grid.Column="2" Text="{Binding UsageText}" FontSize="11.5"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource TextMutedBrush}"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource Card}" Padding="0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0" Padding="16,12" BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,0,0,1">
+                            <TextBlock Text="备份日志" Style="{StaticResource CardTitle}"/>
+                        </Border>
+
+                        <DataGrid Grid.Row="1" ItemsSource="{Binding Info.Logs}" MaxHeight="240"
+                                  BorderThickness="0" SelectionMode="Single"
+                                  MouseDoubleClick="OnLogDoubleClick">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="文件名" Binding="{Binding Name}" Width="*"/>
+                                <DataGridTextColumn Header="大小" Width="82"
+                                                    Binding="{Binding Size, Converter={StaticResource Bytes}}"/>
+                                <DataGridTextColumn Header="修改时间" Width="140"
+                                                    Binding="{Binding LastWrite, Converter={StaticResource Date}}"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <Border Style="{StaticResource Card}" Margin="0,12,0,0" Padding="0"
+                    Visibility="{Binding HasLog, Converter={StaticResource BoolVis}}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Padding="16,12" BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <Grid>
+                            <TextBlock Text="{Binding SelectedLog}" Style="{StaticResource CardTitle}"
+                                       VerticalAlignment="Center"/>
+                            <Button Content="关闭" Style="{StaticResource LinkButton}"
+                                    HorizontalAlignment="Right"
+                                    Command="{Binding CloseLogCommand}"/>
+                        </Grid>
+                    </Border>
+
+                    <TextBox Grid.Row="1" Text="{Binding LogText, Mode=OneWay}" IsReadOnly="True"
+                             FontFamily="Consolas" FontSize="12" Padding="14,10"
+                             BorderThickness="0" Background="{DynamicResource InputBgBrush}"
+                             Height="320" VerticalScrollBarVisibility="Auto"
+                             HorizontalScrollBarVisibility="Auto" TextWrapping="NoWrap"/>
+                </Grid>
+            </Border>
+
+            <!-- ================================================= settings -->
+            <Border Style="{StaticResource Card}" Margin="0,12,0,0" Padding="18,14">
+                <StackPanel>
+                    <Grid>
+                        <TextBlock Text="旧版备份设置（计划任务监控）" Style="{StaticResource CardTitle}"
+                                   VerticalAlignment="Center"/>
+                        <Button Content="编辑" Style="{StaticResource LinkButton}" HorizontalAlignment="Right"
+                                Command="{Binding ToggleSettingsCommand}"/>
+                    </Grid>
+
+                    <Grid Margin="0,12,0,0" Visibility="{Binding SettingsVisible, Converter={StaticResource BoolVis}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,0">
+                            <TextBlock Text="计划任务路径" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding SettingsTask}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,12,0">
+                            <TextBlock Text="备份源目录" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding SettingsSource}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="0" Grid.Column="2">
+                            <TextBlock Text="日志目录" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding SettingsLogDir}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,12,12,0">
+                            <TextBlock Text="自动刷新间隔（秒，5–600）" Style="{StaticResource FieldLabel}"/>
+                            <TextBox Text="{Binding SettingsRefresh}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0"
+                                Visibility="{Binding SettingsVisible, Converter={StaticResource BoolVis}}">
+                        <Button Content="保存设置" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding SaveSettingsCommand}" MinWidth="90"/>
+                    </StackPanel>
+
+                    <TextBlock Text="旧版设置用于监控 NAS 上已经存在的 robocopy 任务；新的备份计划引擎在页面上方。"
+                               Style="{StaticResource CardHint}" Margin="0,10,0,0"/>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl> 

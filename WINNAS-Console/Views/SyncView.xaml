@@ -1,0 +1,239 @@
+<UserControl x:Class="Winnas.Console.Views.SyncView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource PageBgBrush}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="22,18,22,22" MaxWidth="1080" HorizontalAlignment="Left">
+
+            <Border Style="{StaticResource HintBar}" Margin="0,0,0,12"
+                    Visibility="{Binding HelpVisible, Converter={StaticResource BoolVis}}">
+                <TextBlock Text="{Binding HelpText, Mode=OneWay}" Style="{StaticResource HintBarText}"/>
+            </Border>
+
+            <Border Background="{DynamicResource SuccessSoftBrush}" BorderBrush="{DynamicResource SuccessBorderBrush}"
+                    BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,0,12"
+                    Visibility="{Binding Notice, Converter={StaticResource StrVis}}">
+                <TextBlock Text="{Binding Notice}" Foreground="{DynamicResource SuccessTextBrush}"
+                           FontSize="12" TextWrapping="Wrap"/>
+            </Border>
+
+            <Border Background="{DynamicResource DangerSoftBrush}" BorderBrush="{DynamicResource DangerBorderBrush}"
+                    BorderThickness="1" CornerRadius="8" Padding="12,10" Margin="0,0,0,12"
+                    Visibility="{Binding HasError, Converter={StaticResource BoolVis}}">
+                <TextBlock Text="{Binding Error}" Foreground="{DynamicResource DangerTextBrush}"
+                           FontSize="12" TextWrapping="Wrap"/>
+            </Border>
+
+            <!-- ============================================ 软件设置同步 -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                <StackPanel>
+                    <Grid>
+                        <TextBlock Text="软件设置同步" Style="{StaticResource CardTitle}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding SyncStateText}" FontSize="11.5" HorizontalAlignment="Right"
+                                   VerticalAlignment="Center" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextMutedBrush}"/>
+                    </Grid>
+                    <TextBlock Style="{StaticResource CardHint}" Margin="0,3,0,0" TextWrapping="Wrap"
+                               Text="把控制台的连接、皮肤、快照策略、备份方案等设置复制到被控端保存一份，需要时可以再拉回来。密码与 AI Key 不参与同步。"/>
+
+                    <Grid Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="18"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Background="{DynamicResource SubtleBgBrush}" CornerRadius="8" Padding="12,10">
+                            <StackPanel>
+                                <TextBlock Text="本机 · 控制台" Style="{StaticResource FieldLabel}"/>
+                                <TextBlock Text="{Binding LocalConfigPath}" Style="{StaticResource Mono}"
+                                           TextWrapping="Wrap" FontSize="11"/>
+                                <TextBlock Text="{Binding LocalWritten}" FontSize="11" Margin="0,6,0,0"
+                                           Foreground="{DynamicResource TextMutedBrush}"/>
+                                <TextBlock Text="{Binding LocalSummary}" FontSize="12" Margin="0,6,0,0"
+                                           TextWrapping="Wrap" Foreground="{DynamicResource TextMainBrush}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Grid.Column="1" Text="⇄" FontSize="18" HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" Foreground="{DynamicResource TextMutedBrush}"/>
+
+                        <Border Grid.Column="2" Background="{DynamicResource SubtleBgBrush}" CornerRadius="8" Padding="12,10">
+                            <StackPanel>
+                                <TextBlock Text="被控端 · NAS" Style="{StaticResource FieldLabel}"/>
+                                <TextBlock Text="{Binding TargetConfigPath}" Style="{StaticResource Mono}"
+                                           TextWrapping="Wrap" FontSize="11"/>
+                                <TextBlock Text="{Binding TargetWritten}" FontSize="11" Margin="0,6,0,0"
+                                           Foreground="{DynamicResource TextMutedBrush}"/>
+                                <TextBlock Text="{Binding TargetSummary}" FontSize="12" Margin="0,6,0,0"
+                                           TextWrapping="Wrap" Foreground="{DynamicResource TextMainBrush}"/>
+                                <TextBlock Text="{Binding TargetFingerprint}" FontSize="10.5" Margin="0,4,0,0"
+                                           Foreground="{DynamicResource TextMutedBrush}"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <TextBlock Text="✓ 两端设置一致" FontWeight="SemiBold" FontSize="12"
+                                   Foreground="{DynamicResource SuccessBrush}"
+                                   Visibility="{Binding SyncIsAligned, Converter={StaticResource BoolVis}}"/>
+                        <TextBlock Text="! 需要同步" FontWeight="SemiBold" FontSize="12"
+                                   Foreground="{DynamicResource WarningBrush}"
+                                   Visibility="{Binding SyncNeedsAction, Converter={StaticResource BoolVis}}"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                        <Button Content="下发到 NAS" Command="{Binding PushSettingsCommand}"
+                                Style="{StaticResource PrimaryButton}" Margin="0,0,8,0"/>
+                        <Button Content="从 NAS 恢复" Command="{Binding PullSettingsCommand}"
+                                Style="{StaticResource DefaultButton}" Margin="0,0,8,0"/>
+                        <Button Content="导出到文件" Command="{Binding ExportSettingsCommand}"
+                                Style="{StaticResource DefaultButton}" Margin="0,0,8,0"/>
+                        <Button Content="从文件导入" Command="{Binding ImportSettingsCommand}"
+                                Style="{StaticResource DefaultButton}" Margin="0,0,8,0"/>
+                        <Button Content="刷新" Command="{Binding RefreshCommand}"
+                                Style="{StaticResource DefaultButton}"/>
+                    </StackPanel>
+
+                    <CheckBox IsChecked="{Binding SyncAutoPush, Mode=TwoWay}" Margin="0,14,0,0"
+                              Foreground="{DynamicResource TextMainBrush}" FontSize="12"
+                              Content="每次连接成功后，自动把本机设置下发到被控端"/>
+                </StackPanel>
+            </Border>
+
+            <!-- ============================================== 备份方案 -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                <StackPanel>
+                    <Grid>
+                        <TextBlock Text="备份方案" Style="{StaticResource CardTitle}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding PlanCountText}" FontSize="11.5" HorizontalAlignment="Right"
+                                   VerticalAlignment="Center" Foreground="{DynamicResource TextMutedBrush}"/>
+                    </Grid>
+                    <TextBlock Style="{StaticResource CardHint}" Margin="0,3,0,0" TextWrapping="Wrap"
+                               Text="这里列出本机全部备份方案，和「备份」页是同一份数据。被控端由计划任务执行的副本是独立的 backup-plans.json，两边条数不一致时下发一次即可。"/>
+
+                    <DataGrid ItemsSource="{Binding Plans}" Margin="0,12,0,0" MaxHeight="210"
+                              Visibility="{Binding HasPlans, Converter={StaticResource BoolVis}}"
+                              BorderThickness="0" SelectionMode="Single" AutoGenerateColumns="False"
+                              IsReadOnly="True" HeadersVisibility="Column">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="名称" Binding="{Binding Name}" Width="150"/>
+                            <DataGridTextColumn Header="源" Binding="{Binding Source}" Width="*"/>
+                            <DataGridTextColumn Header="目标" Binding="{Binding Target}" Width="*"/>
+                            <DataGridTextColumn Header="模式" Binding="{Binding ModeText}" Width="90"/>
+                            <DataGridTextColumn Header="频率" Binding="{Binding FrequencyText}" Width="100"/>
+                            <DataGridTextColumn Header="上次成功" Binding="{Binding LastSuccessText}" Width="130"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <Border Background="{DynamicResource SubtleBgBrush}" CornerRadius="8" Padding="14,18"
+                            Margin="0,12,0,0"
+                            Visibility="{Binding HasPlans, Converter={StaticResource BoolVis}, ConverterParameter=inverse}">
+                        <TextBlock Text="本机还没有备份方案。到「备份」页新建一个，这里会自动列出。"
+                                   FontSize="12" HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextMutedBrush}"/>
+                    </Border>
+
+                    <TextBlock Text="{Binding TargetPlanText}" FontSize="11.5" Margin="0,10,0,0"
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}"/>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                        <Button Content="下发方案到 NAS" Command="{Binding PushPlansCommand}"
+                                Style="{StaticResource PrimaryButton}" Margin="0,0,8,0"/>
+                        <Button Content="刷新" Command="{Binding RefreshCommand}"
+                                Style="{StaticResource DefaultButton}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- ========================================== 时间检查与校时 -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,12">
+                <StackPanel>
+                    <Grid>
+                        <TextBlock Text="时间检查与校时" Style="{StaticResource CardTitle}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding ClockMethod}" FontSize="11" HorizontalAlignment="Right"
+                                   VerticalAlignment="Center" Foreground="{DynamicResource TextMutedBrush}"/>
+                    </Grid>
+                    <TextBlock Style="{StaticResource CardHint}" Margin="0,3,0,0" TextWrapping="Wrap"
+                               Text="被控端时钟慢几天会让安全日志、计划任务和备份时间戳全部失去意义。偏差超过容差时，把被控端设成控制台的当地时间。"/>
+
+                    <Grid Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Background="{DynamicResource SubtleBgBrush}" CornerRadius="8" Padding="12,10" Margin="0,0,8,0">
+                            <StackPanel>
+                                <TextBlock Text="本机时间" Style="{StaticResource FieldLabel}"/>
+                                <TextBlock Text="{Binding LocalTimeText}" FontSize="17" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextMainBrush}"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="1" Background="{DynamicResource SubtleBgBrush}" CornerRadius="8" Padding="12,10" Margin="0,0,8,0">
+                            <StackPanel>
+                                <TextBlock Text="被控端时间" Style="{StaticResource FieldLabel}"/>
+                                <TextBlock Text="{Binding TargetTimeText}" FontSize="17" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextMainBrush}"/>
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="2" Background="{DynamicResource SubtleBgBrush}" CornerRadius="8" Padding="12,10">
+                            <StackPanel>
+                                <TextBlock Text="偏差" Style="{StaticResource FieldLabel}"/>
+                                <TextBlock Text="{Binding DriftText}" FontSize="17" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextMainBrush}"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <TextBlock Text="✓ 时钟一致" FontWeight="SemiBold" FontSize="12"
+                                   Foreground="{DynamicResource SuccessBrush}"
+                                   Visibility="{Binding ClockAligned, Converter={StaticResource BoolVis}}"/>
+                        <TextBlock Text="! 时钟偏差超过容差，需要校准" FontWeight="SemiBold" FontSize="12"
+                                   Foreground="{DynamicResource WarningBrush}"
+                                   Visibility="{Binding ClockDrifted, Converter={StaticResource BoolVis}}"/>
+                    </StackPanel>
+
+                    <TextBlock Text="{Binding ClockDetail}" FontSize="11.5" Margin="0,8,0,0"
+                               TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}"/>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,14,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="容差" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <ComboBox ItemsSource="{Binding ToleranceChoices}"
+                                  SelectedItem="{Binding TimeToleranceSeconds, Mode=TwoWay}"
+                                  Width="90" VerticalAlignment="Center"/>
+                        <TextBlock Text="秒（10 / 30 / 60 / 300 / 3600）" FontSize="11"
+                                   VerticalAlignment="Center" Margin="8,0,0,0"
+                                   Foreground="{DynamicResource TextMutedBrush}"/>
+                        <CheckBox IsChecked="{Binding TimeAutoSync, Mode=TwoWay}" Margin="24,0,0,0"
+                                  VerticalAlignment="Center" FontSize="12"
+                                  Foreground="{DynamicResource TextMainBrush}"
+                                  Content="连接成功后自动检查并校准"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                        <Button Content="检查时间" Command="{Binding CheckTimeCommand}"
+                                Style="{StaticResource DefaultButton}" Margin="0,0,8,0"/>
+                        <Button Content="立即校准" Command="{Binding CorrectTimeCommand}"
+                                Style="{StaticResource PrimaryButton}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- ================================================== 说明 -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="同步边界与命令行" Style="{StaticResource CardTitle}"/>
+                    <TextBlock Style="{StaticResource CardHint}" Margin="0,6,0,0" TextWrapping="Wrap"
+                               Text="密码和 AI Key 用 Windows DPAPI 按当前 Windows 用户加密，换一台机器或换一个账户都解不开，所以快照里根本不包含它们；恢复时按连接 Id 把本机已存的密码填回去。窗口位置、上次连接哪台机器也属于本机状态，不参与同步。改系统时间会影响被控端上的计划任务触发时刻与日志时间戳。"/>
+                    <TextBlock Margin="0,10,0,0" Style="{StaticResource Mono}" FontSize="11" TextWrapping="Wrap"
+                               Foreground="{DynamicResource TextSecondaryBrush}"
+                               Text="WINNAS.Console.exe --synctime --check      只检查时钟，不改动&#x0a;WINNAS.Console.exe --synctime                检查并校准&#x0a;WINNAS.Console.exe --syncsettings status     对比两端设置&#x0a;WINNAS.Console.exe --syncsettings push       下发设置&#x0a;WINNAS.Console.exe --syncsettings pull       从被控端恢复&#x0a;WINNAS.Console.exe --syncsettings export &lt;路径&gt;   导出副本&#x0a;WINNAS.Console.exe --syncsettings import &lt;路径&gt;   导入副本"/>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

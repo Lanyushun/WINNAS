@@ -1,0 +1,47 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- 靛紫：冷紫调，层次分明，适合多窗口并排看。
+         只放颜色。控件样式在 Styles.xaml，靠 DynamicResource 取这里的键，
+         所以换肤只需替换这一个字典。 -->
+
+    <SolidColorBrush x:Key="PageBgBrush" Color="#F5F2FA"/>
+    <SolidColorBrush x:Key="SidebarBgBrush" Color="#FBF9FE"/>
+    <SolidColorBrush x:Key="CardBgBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="ButtonBgBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="InputBgBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="HeaderBgBrush" Color="#EDE7F7"/>
+    <SolidColorBrush x:Key="RowAltBrush" Color="#F8F5FD"/>
+    <SolidColorBrush x:Key="SubtleBgBrush" Color="#F1EBFA"/>
+    <SolidColorBrush x:Key="SelectedBgBrush" Color="#E6DCF7"/>
+    <SolidColorBrush x:Key="HoverBgBrush" Color="#F0EAF9"/>
+    <SolidColorBrush x:Key="BorderBrush" Color="#DCD2EC"/>
+    <SolidColorBrush x:Key="BorderStrongBrush" Color="#BFB0DA"/>
+    <SolidColorBrush x:Key="TextMainBrush" Color="#241B3A"/>
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="#4A3D66"/>
+    <SolidColorBrush x:Key="TextMutedBrush" Color="#7A6C96"/>
+    <SolidColorBrush x:Key="TextOnPrimaryBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="PrimaryBrush" Color="#6D28D9"/>
+    <SolidColorBrush x:Key="PrimaryDarkBrush" Color="#5B21B6"/>
+    <SolidColorBrush x:Key="PrimarySoftBrush" Color="#F0E9FD"/>
+    <SolidColorBrush x:Key="PrimaryBorderBrush" Color="#CDBDF0"/>
+    <SolidColorBrush x:Key="DangerBrush" Color="#BE123C"/>
+    <SolidColorBrush x:Key="DangerDarkBrush" Color="#9F1239"/>
+    <SolidColorBrush x:Key="DangerSoftBrush" Color="#FCE9EE"/>
+    <SolidColorBrush x:Key="DangerBorderBrush" Color="#F2C3D1"/>
+    <SolidColorBrush x:Key="DangerTextBrush" Color="#881337"/>
+    <SolidColorBrush x:Key="SuccessBrush" Color="#15803D"/>
+    <SolidColorBrush x:Key="SuccessTextBrush" Color="#166534"/>
+    <SolidColorBrush x:Key="SuccessSoftBrush" Color="#EAF7EE"/>
+    <SolidColorBrush x:Key="SuccessBorderBrush" Color="#BFE3C9"/>
+    <SolidColorBrush x:Key="WarningBrush" Color="#B45309"/>
+    <SolidColorBrush x:Key="WarningSoftBrush" Color="#FDF4E3"/>
+    <SolidColorBrush x:Key="WarningBorderBrush" Color="#EFD6A6"/>
+    <SolidColorBrush x:Key="WarningTextBrush" Color="#92400E"/>
+    <SolidColorBrush x:Key="InfoBrush" Color="#6D28D9"/>
+    <SolidColorBrush x:Key="InfoSoftBrush" Color="#F1EAFD"/>
+    <SolidColorBrush x:Key="InfoBorderBrush" Color="#CDBDF0"/>
+    <SolidColorBrush x:Key="InfoTextBrush" Color="#4C1D95"/>
+    <SolidColorBrush x:Key="CodeBgBrush" Color="#1E1630"/>
+    <SolidColorBrush x:Key="CodeTextBrush" Color="#E4DCF2"/>
+</ResourceDictionary>

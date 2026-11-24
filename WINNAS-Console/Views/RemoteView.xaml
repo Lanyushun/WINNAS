@@ -1,0 +1,452 @@
+<UserControl x:Class="Winnas.Console.Views.RemoteView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource PageBgBrush}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="22,18,22,22">
+
+            <Border Style="{StaticResource HintBar}" Margin="0,0,0,12"
+                    Visibility="{Binding HelpVisible, Converter={StaticResource BoolVis}}">
+                <TextBlock Text="{Binding HelpText, Mode=OneWay}" Style="{StaticResource HintBarText}"/>
+            </Border>
+
+            <!-- ===================================================== target -->
+            <Border Background="{DynamicResource InfoSoftBrush}" BorderBrush="{DynamicResource InfoBorderBrush}" BorderThickness="1" CornerRadius="8"
+                    Padding="14,12" Margin="0,0,0,12">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0" Text="被控端" FontSize="12" FontWeight="SemiBold"
+                               Foreground="{DynamicResource PrimaryDarkBrush}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding TargetLabel, Mode=OneWay}" FontSize="14"
+                                   FontWeight="SemiBold" Foreground="{DynamicResource InfoTextBrush}"
+                                   TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="{Binding TargetHint, Mode=OneWay}" FontSize="11.5"
+                                   Foreground="{DynamicResource InfoTextBrush}" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="远程桌面" Style="{StaticResource DefaultButton}" Padding="10,6"
+                                Command="{Binding OpenRemoteDesktopCommand}" Margin="0,0,8,0"
+                                ToolTip="在本机启动 mstsc，连到被控端"/>
+                        <Button Content="刷新数据" Style="{StaticResource DefaultButton}" Padding="10,6"
+                                Command="{Binding RefreshProcessesCommand}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <Border Background="{DynamicResource DangerSoftBrush}" BorderBrush="{DynamicResource DangerBorderBrush}" BorderThickness="1" CornerRadius="8"
+                    Padding="12,10" Margin="0,0,0,12"
+                    Visibility="{Binding Error, Converter={StaticResource StrVis}}">
+                <TextBlock Text="{Binding Error}" Foreground="{DynamicResource DangerDarkBrush}" FontSize="12" TextWrapping="Wrap"/>
+            </Border>
+
+            <Border Background="{DynamicResource SuccessSoftBrush}" BorderBrush="{DynamicResource SuccessBorderBrush}" BorderThickness="1" CornerRadius="8"
+                    Padding="12,10" Margin="0,0,0,12"
+                    Visibility="{Binding Notice, Converter={StaticResource StrVis}}">
+                <TextBlock Text="{Binding Notice}" Foreground="{DynamicResource SuccessBrush}" FontSize="12" TextWrapping="Wrap"/>
+            </Border>
+
+            <!-- ====================================================== power -->
+            <Border Style="{StaticResource Card}" Padding="18,14">
+                <StackPanel>
+                    <Grid>
+                        <TextBlock Text="电源与电源相关操作" Style="{StaticResource CardTitle}"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="11.5"
+                                   Foreground="{DynamicResource TextMutedBrush}"
+                                   Text="关机/重启不需要交互式会话；休眠、睡眠、锁定需要"/>
+                    </Grid>
+
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="128"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" Text="延时" FontSize="12" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextMutedBrush}" Margin="0,0,8,0"/>
+                        <ComboBox Grid.Column="1" ItemsSource="{Binding DelayLabels}"
+                                  SelectedIndex="{Binding DelayIndex}"/>
+
+                        <CheckBox Grid.Column="2" Content="强制关闭程序" IsChecked="{Binding ForcePower}"
+                                  VerticalAlignment="Center" Margin="16,0,0,0"/>
+
+                        <StackPanel Grid.Column="3" Orientation="Horizontal" Margin="16,0,0,0"
+                                    VerticalAlignment="Center">
+                            <TextBlock Text="原因" FontSize="12" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextMutedBrush}" Margin="0,0,8,0"/>
+                            <TextBox Text="{Binding PowerReason, UpdateSourceTrigger=PropertyChanged}"
+                                     Width="240" VerticalAlignment="Center"
+                                     ToolTip="会写进被控端的关机事件日志，方便事后查是谁关的"/>
+                        </StackPanel>
+
+                        <TextBlock Grid.Column="4" Text="{Binding DelayText, Mode=OneWay}" FontSize="11.5"
+                                   VerticalAlignment="Center" Foreground="{DynamicResource TextMutedBrush}"/>
+                    </Grid>
+
+                    <WrapPanel Margin="0,14,0,0">
+                        <Button Content="关闭被控端" Style="{StaticResource DangerButton}" Padding="14,7"
+                                Command="{Binding PowerCommand}" CommandParameter="Shutdown"
+                                Margin="0,0,8,8" MinWidth="104"/>
+                        <Button Content="重启被控端" Style="{StaticResource DangerButton}" Padding="14,7"
+                                Command="{Binding PowerCommand}" CommandParameter="Reboot"
+                                Margin="0,0,8,8" MinWidth="104"/>
+                        <Button Content="注销当前用户" Style="{StaticResource DefaultButton}" Padding="14,7"
+                                Command="{Binding PowerCommand}" CommandParameter="Logoff"
+                                Margin="0,0,8,8" MinWidth="112"/>
+                        <Button Content="休眠" Style="{StaticResource DefaultButton}" Padding="14,7"
+                                Command="{Binding PowerCommand}" CommandParameter="Hibernate"
+                                Margin="0,0,8,8" MinWidth="72"/>
+                        <Button Content="睡眠" Style="{StaticResource DefaultButton}" Padding="14,7"
+                                Command="{Binding PowerCommand}" CommandParameter="Sleep"
+                                Margin="0,0,8,8" MinWidth="72"/>
+                        <Button Content="锁定" Style="{StaticResource DefaultButton}" Padding="14,7"
+                                Command="{Binding PowerCommand}" CommandParameter="Lock"
+                                Margin="0,0,8,8" MinWidth="72"/>
+                        <Button Content="取消待关机" Style="{StaticResource LinkButton}" Padding="10,7"
+                                Command="{Binding PowerCommand}" CommandParameter="Abort"
+                                Margin="0,0,8,8"/>
+                    </WrapPanel>
+
+                    <TextBlock Style="{StaticResource CardHint}" Margin="0,2,0,0"
+                               Text="「强制关闭程序」会让被控端不等程序保存就直接关机——备份或拷贝正在跑的时候不要勾。延时期间可以点「取消待关机」撤回。"/>
+                </StackPanel>
+            </Border>
+
+            <!-- ==================================================== command -->
+            <Border Style="{StaticResource Card}" Margin="0,12,0,0" Padding="18,14">
+                <StackPanel>
+                    <Grid>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="远程命令" Style="{StaticResource CardTitle}" VerticalAlignment="Center"/>
+                            <Border Style="{StaticResource Pill}" Margin="10,0,0,0" Background="{DynamicResource HeaderBgBrush}">
+                                <TextBlock Text="在被控端执行" FontSize="10.5"
+                                           Foreground="{DynamicResource TextMutedBrush}"/>
+                            </Border>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <TextBlock Text="超时" FontSize="12" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextMutedBrush}" Margin="0,0,8,0"/>
+                            <ComboBox Width="96" ItemsSource="{Binding TimeoutLabels}"
+                                      SelectedIndex="{Binding TimeoutIndex}" Margin="0,0,10,0"/>
+                            <Button Content="清空输出" Style="{StaticResource LinkButton}"
+                                    Command="{Binding ClearOutputCommand}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <ItemsControl ItemsSource="{Binding Presets}" Margin="0,10,0,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Content="{Binding Name}" Style="{StaticResource DefaultButton}"
+                                        Padding="10,5" FontSize="12" Margin="0,0,8,8"
+                                        ToolTip="{Binding Command}"
+                                        Command="{Binding DataContext.UsePresetCommand,
+                                                  RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Grid Margin="0,2,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid Grid.Column="0">
+                            <TextBox FontFamily="Consolas" FontSize="12"
+                                     Text="{Binding CommandText, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="34" VerticalContentAlignment="Center"
+                                     ToolTip="在被控端用 cmd 执行；不要写需要人工确认的命令">
+                                <TextBox.InputBindings>
+                                    <KeyBinding Key="Enter" Command="{Binding RunShellCommand}"/>
+                                </TextBox.InputBindings>
+                            </TextBox>
+                            <TextBlock Text="输入命令，回车执行。也可以先点上面的常用命令" IsHitTestVisible="False"
+                                       FontSize="12" Margin="10,0,0,0" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextMutedBrush}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding CommandText}" Value="">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                        <Button Grid.Column="1" Content="执行" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding RunShellCommand}" Margin="8,0,0,0" MinWidth="88"
+                                IsEnabled="{Binding CommandRunning, Converter={StaticResource InvertBool}}"/>
+                    </Grid>
+
+                    <TextBlock Text="{Binding CommandStatus, Mode=OneWay}" FontSize="11.5" Margin="0,8,0,0"
+                               Foreground="{DynamicResource TextMutedBrush}"/>
+
+                    <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6"
+                            Margin="0,8,0,0" Background="{DynamicResource CodeBgBrush}">
+                        <Grid>
+                            <ScrollViewer Height="210" VerticalScrollBarVisibility="Auto"
+                                          HorizontalScrollBarVisibility="Auto" Padding="12,10">
+                                <TextBox Text="{Binding CommandOutput, Mode=OneWay}" IsReadOnly="True"
+                                         FontFamily="Consolas" FontSize="11.5" Background="Transparent"
+                                         Foreground="{DynamicResource CodeTextBrush}" BorderThickness="0" TextWrapping="NoWrap"/>
+                            </ScrollViewer>
+
+                            <TextBlock Text="执行后这里显示被控端的输出" FontSize="11.5"
+                                       Foreground="{DynamicResource TextMutedBrush}" IsHitTestVisible="False"
+                                       Margin="14,12,0,0" VerticalAlignment="Top">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding CommandOutput}" Value="">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                    </Border>
+
+                    <TextBlock Style="{StaticResource CardHint}" Margin="0,8,0,0"
+                               Text="输出通过在被控端写临时文件再读回（C:\ProgramData\WINNAS-Console\remote），所以交互式命令（如 diskpart、需要按 Y 确认的）会卡住直到超时。查看文件内容请用 type / Get-Content 之类不带交互的命令。"/>
+                </StackPanel>
+            </Border>
+
+            <!-- =========================================== processes + services -->
+            <Grid Margin="0,12,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- processes -->
+                <Border Grid.Column="0" Style="{StaticResource Card}" Padding="0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0" Padding="16,12" BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,0,0,1">
+                            <Grid>
+                                <TextBlock Text="进程" Style="{StaticResource CardTitle}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding ProcSummary, Mode=OneWay}" FontSize="11"
+                                           VerticalAlignment="Center" HorizontalAlignment="Right"
+                                           Foreground="{DynamicResource TextMutedBrush}"/>
+                            </Grid>
+                        </Border>
+
+                        <Grid Grid.Row="1" Margin="12,10,12,6">
+                            <TextBox Style="{StaticResource SearchBox}" Height="30"
+                                     Text="{Binding ProcFilter, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="按进程名、PID 或命令行过滤"/>
+                            <TextBlock Text="搜索进程 / PID" IsHitTestVisible="False" Margin="10,0,0,0"
+                                       VerticalAlignment="Center" FontSize="12"
+                                       Foreground="{DynamicResource TextMutedBrush}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ProcFilter}" Value="">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+
+                        <DataGrid Grid.Row="2" ItemsSource="{Binding Processes}"
+                                  SelectedItem="{Binding SelectedProcess, Mode=TwoWay}"
+                                  MaxHeight="330" BorderThickness="0" IsReadOnly="True"
+                                  AutoGenerateColumns="False"
+                                  EnableRowVirtualization="True"
+                                  VirtualizingPanel.IsVirtualizing="True">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="进程名" Binding="{Binding Name}" Width="*"/>
+                                <DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="72"/>
+                                <DataGridTextColumn Header="内存" Width="96">
+                                    <DataGridTextColumn.Binding>
+                                        <Binding Path="Memory" Converter="{StaticResource Bytes}"/>
+                                    </DataGridTextColumn.Binding>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="启动时间" Binding="{Binding CreatedText}" Width="96"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <Border Grid.Row="3" Padding="12,10" BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,1,0,0">
+                            <Grid>
+                                <TextBlock Text="系统关键进程已锁定，无法结束" FontSize="11"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextMutedBrush}"/>
+                                <Button Content="结束进程" Style="{StaticResource DangerButton}"
+                                        HorizontalAlignment="Right" Padding="12,6"
+                                        Command="{Binding KillProcessCommand}"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- services -->
+                <Border Grid.Column="2" Style="{StaticResource Card}" Padding="0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Border Grid.Row="0" Padding="16,12" BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,0,0,1">
+                            <Grid>
+                                <TextBlock Text="服务" Style="{StaticResource CardTitle}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding SvcSummary, Mode=OneWay}" FontSize="11"
+                                           VerticalAlignment="Center" HorizontalAlignment="Right"
+                                           Foreground="{DynamicResource TextMutedBrush}"/>
+                            </Grid>
+                        </Border>
+
+                        <Grid Grid.Row="1" Margin="12,10,12,6">
+                            <TextBox Style="{StaticResource SearchBox}" Height="30"
+                                     Text="{Binding SvcFilter, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="按服务名或显示名过滤"/>
+                            <TextBlock Text="搜索服务" IsHitTestVisible="False" Margin="10,0,0,0"
+                                       VerticalAlignment="Center" FontSize="12"
+                                       Foreground="{DynamicResource TextMutedBrush}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SvcFilter}" Value="">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+
+                        <DataGrid Grid.Row="2" ItemsSource="{Binding Services}"
+                                  SelectedItem="{Binding SelectedService, Mode=TwoWay}"
+                                  MaxHeight="330" BorderThickness="0" IsReadOnly="True"
+                                  AutoGenerateColumns="False">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="服务名" Binding="{Binding Name}" Width="*"/>
+                                <DataGridTextColumn Header="状态" Binding="{Binding StateText}" Width="78"/>
+                                <DataGridTextColumn Header="启动" Binding="{Binding StartModeText}" Width="64"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <Border Grid.Row="3" Padding="12,10" BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,1,0,0">
+                            <Grid>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button Content="启动" Style="{StaticResource DefaultButton}" Padding="10,6"
+                                            Command="{Binding StartServiceCommand}" Margin="0,0,6,0" MinWidth="60"/>
+                                    <Button Content="停止" Style="{StaticResource DefaultButton}" Padding="10,6"
+                                            Command="{Binding StopServiceCommand}" Margin="0,0,6,0" MinWidth="60"/>
+                                    <Button Content="重启" Style="{StaticResource DefaultButton}" Padding="10,6"
+                                            Command="{Binding RestartServiceCommand}" MinWidth="60"/>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                            VerticalAlignment="Center">
+                                    <TextBlock Text="启动类型" FontSize="11.5" VerticalAlignment="Center"
+                                               Foreground="{DynamicResource TextMutedBrush}" Margin="0,0,6,0"/>
+                                    <ComboBox Width="82" SelectedIndex="-1"
+                                              ToolTip="选中一个服务后选择启动类型">
+                                        <ComboBoxItem Content="自动" Tag="Auto"
+                                                      MouseLeftButtonUp="OnStartModePicked"/>
+                                        <ComboBoxItem Content="手动" Tag="Manual"
+                                                      MouseLeftButtonUp="OnStartModePicked"/>
+                                        <ComboBoxItem Content="禁用" Tag="Disabled"
+                                                      MouseLeftButtonUp="OnStartModePicked"/>
+                                    </ComboBox>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- ============================================ notify + wake -->
+            <Grid Margin="0,12,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource Card}" Padding="18,14">
+                    <StackPanel>
+                        <TextBlock Text="在被控端弹出通知" Style="{StaticResource CardTitle}"/>
+
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0" Text="{Binding NotifyText, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="32" VerticalContentAlignment="Center"
+                                     ToolTip="例如：备份即将开始，请不要关机"/>
+                            <Button Grid.Column="1" Content="发送" Style="{StaticResource DefaultButton}"
+                                    Command="{Binding NotifyCommand}" Margin="8,0,0,0" MinWidth="76"/>
+                        </Grid>
+
+                        <TextBlock Style="{StaticResource CardHint}" Margin="0,8,0,0"
+                                   Text="用 msg.exe 广播到被控端已登录的会话，适合「先打个招呼再重启」。没人登录时不会有任何效果，这是正常的。"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource Card}" Padding="18,14">
+                    <StackPanel>
+                        <TextBlock Text="网络唤醒（关机状态下也能用）" Style="{StaticResource CardTitle}"/>
+
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0" Text="{Binding WakeMac, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="32" VerticalContentAlignment="Center"
+                                     FontFamily="Consolas"
+                                     ToolTip="被控端网卡的 MAC，例如 00-11-22-33-44-55"/>
+                            <Button Grid.Column="1" Content="唤醒" Style="{StaticResource PrimaryButton}"
+                                    Command="{Binding WakeUpCommand}" Margin="8,0,0,0" MinWidth="76"/>
+                        </Grid>
+
+                        <TextBlock Style="{StaticResource CardHint}" Margin="0,8,0,0"
+                                   Text="唤醒包从这台电脑广播出去，不需要连着被控端。还需要被控端主板开启 Wake-on-LAN、网卡允许「魔术包唤醒」，并且关机后网卡仍带电。MAC 会随当前连接一起保存。"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
