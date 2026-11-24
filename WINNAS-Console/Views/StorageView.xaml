@@ -1,0 +1,131 @@
+<UserControl x:Class="Winnas.Console.Views.StorageView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource PageBgBrush}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="22,18,22,22">
+
+            <Border Style="{StaticResource HintBar}" Margin="0,0,0,14"
+                    Visibility="{Binding HelpVisible, Converter={StaticResource BoolVis}}">
+                <TextBlock Text="{Binding HelpText, Mode=OneWay}" Style="{StaticResource HintBarText}"/>
+            </Border>
+
+            <Border Background="{DynamicResource DangerSoftBrush}" BorderBrush="{DynamicResource DangerBorderBrush}" BorderThickness="1" CornerRadius="8"
+                    Padding="12,10" Margin="0,0,0,14"
+                    Visibility="{Binding Error, Converter={StaticResource StrVis}}">
+                <TextBlock Text="{Binding Error}" Foreground="{DynamicResource DangerDarkBrush}" FontSize="12" TextWrapping="Wrap"/>
+            </Border>
+
+            <Border Style="{StaticResource Card}" Padding="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Padding="18,14,18,12"
+                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                        <Grid>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="磁盘健康" Style="{StaticResource CardTitle}"/>
+                                <TextBlock Text="温度与通电信息来自存储可靠性计数器；NVMe 盘通常不报告通电小时，显示为「—」属正常。"
+                                           Style="{StaticResource CardHint}" Margin="0,3,0,0"/>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                        VerticalAlignment="Center">
+                                <TextBox Style="{StaticResource SearchBox}" Width="200"
+                                         Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}"
+                                         ToolTip="按型号、序列号、介质或总线过滤"/>
+                                <Button Content="✕" Style="{StaticResource LinkButton}" FontSize="13"
+                                        Command="{Binding ClearFilterCommand}" Margin="4,0,10,0"
+                                        Visibility="{Binding HasFilter, Converter={StaticResource BoolVis}}"/>
+                                <Button Content="导出 CSV" Style="{StaticResource DefaultButton}"
+                                        Command="{Binding ExportCommand}" Padding="10,6"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding VisibleDisks}" MaxHeight="460"
+                              Margin="0" BorderThickness="0">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="磁盘" Binding="{Binding DeviceId}" Width="52"/>
+
+                            <DataGridTextColumn Header="型号" Binding="{Binding Model}" Width="*"/>
+
+                            <DataGridTextColumn Header="容量" Width="92"
+                                                Binding="{Binding Size, Converter={StaticResource Bytes}}"/>
+
+                            <DataGridTextColumn Header="介质" Binding="{Binding MediaText}" Width="64"/>
+
+                            <DataGridTextColumn Header="总线" Binding="{Binding BusText}" Width="76"/>
+
+                            <DataGridTemplateColumn Header="健康" Width="88">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Ellipse Width="8" Height="8" Margin="0,0,7,0" VerticalAlignment="Center"
+                                                     Fill="{Binding Health, Converter={StaticResource HealthBrush}}"/>
+                                            <TextBlock Text="{Binding HealthText}" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTextColumn Header="温度" Width="72"
+                                                Binding="{Binding Temperature, Converter={StaticResource Temp}}"/>
+
+                            <DataGridTextColumn Header="通电" Width="86"
+                                                Binding="{Binding PowerOnHours, Converter={StaticResource Hours}}"/>
+
+                            <DataGridTextColumn Header="启停次数" Width="86"
+                                                Binding="{Binding PowerCycleCount}"/>
+
+                            <DataGridTextColumn Header="读错误" Width="70"
+                                                Binding="{Binding ReadErrorsTotal, TargetNullValue='—'}"/>
+
+                            <DataGridTextColumn Header="写错误" Width="70"
+                                                Binding="{Binding WriteErrorsTotal, TargetNullValue='—'}"/>
+
+                            <DataGridTextColumn Header="磨损" Width="64"
+                                                Binding="{Binding Wear, TargetNullValue='—'}"/>
+
+                            <DataGridTextColumn Header="序列号" Width="150"
+                                                Binding="{Binding Serial}"/>
+
+                            <DataGridTextColumn Header="分区" Width="240"
+                                                Binding="{Binding Partitions, Converter={StaticResource Partitions}}"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <Border Grid.Row="2" Padding="18,14" BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,1,0,0">
+                        <TextBlock FontSize="12" Foreground="{DynamicResource TextMutedBrush}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Setter Property="Text" Value=""/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding VisibleDisks.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Setter Property="Text" Value="没有匹配的磁盘。若本机确实有盘却显示为空，通常是权限不足：存储命名空间需要管理员权限才能读取"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <Border Background="{DynamicResource WarningSoftBrush}" BorderBrush="{DynamicResource WarningBorderBrush}" BorderThickness="1" CornerRadius="8"
+                    Padding="14,12" Margin="0,14,0,0">
+                <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource WarningTextBrush}">
+                    破坏性操作（初始化、清除、格式化）不在本工具范围内——磁盘管理类操作请在 Windows「磁盘管理」中人工确认后执行。
+                </TextBlock>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl> 

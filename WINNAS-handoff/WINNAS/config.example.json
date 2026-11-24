@@ -1,0 +1,10 @@
+{
+  "user": "admin",
+  "password_sha256": "<把这里换成你自己的 SHA256，用下面命令生成：>",
+  "_how_to": "PowerShell: [BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash([Text.Encoding]::UTF8.GetBytes('你的明文密码'))).Replace('-','').ToLower()",
+  "port": 8081,
+  "host": "0.0.0.0",
+  "nas_source": "D:\\NAS",
+  "backup_mirror_task": "NAS Local Mirror",
+  "backup_log_dir": "C:\\Users\\<你>\\NAS-Backup\\logs"
+}

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WINNAS 控制台</title>
+<style>
+  :root{
+    --bg:#F7F7F5; --panel:#FFFFFF; --line:#E3E2DE; --line2:#CFCEC9;
+    --ink:#2C2C2A; --ink2:#5F5E5A; --ink3:#8A8983;
+    --blue:#185FA5; --blue-bg:#E6F1FB; --green:#0F6E56; --green-bg:#E1F5EE;
+    --amber:#854F0B; --amber-bg:#FAEEDA; --red:#A32D2D; --red-bg:#FCEBEB;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:13px/1.6 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;
+       background:var(--bg);color:var(--ink)}
+  header{display:flex;align-items:center;gap:14px;padding:0 20px;height:52px;
+         background:var(--panel);border-bottom:1px solid var(--line)}
+  header h1{font-size:15px;font-weight:500;margin:0;letter-spacing:.3px}
+  header .host{font-size:12px;color:var(--ink3)}
+  header .spacer{flex:1}
+  header button.ghost{background:none;border:1px solid var(--line2);color:var(--ink2);
+        padding:5px 12px;border-radius:8px;cursor:pointer;font-size:12px}
+  header button.ghost:hover{border-color:var(--ink3);color:var(--ink)}
+  .wrap{display:flex;min-height:calc(100vh - 52px)}
+  nav{width:150px;padding:12px 8px;border-right:1px solid var(--line);background:var(--panel)}
+  nav a{display:block;padding:8px 12px;border-radius:8px;color:var(--ink2);
+        text-decoration:none;font-size:13px;margin-bottom:2px}
+  nav a:hover{background:#F1F0EC;color:var(--ink)}
+  nav a.on{background:var(--blue-bg);color:var(--blue);font-weight:500}
+  main{flex:1;padding:18px 20px 40px;max-width:1180px}
+  h2{font-size:14px;font-weight:500;margin:0 0 10px;color:var(--ink)}
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .card .k{font-size:12px;color:var(--ink3);margin-bottom:4px}
+  .card .v{font-size:19px;font-weight:500;letter-spacing:-.2px}
+  .card .s{font-size:12px;color:var(--ink2);margin-top:2px}
+  .bar{height:6px;border-radius:3px;background:#EDECE8;overflow:hidden;margin-top:8px}
+  .bar i{display:block;height:100%;background:var(--blue);border-radius:3px}
+  .bar.warn i{background:#EF9F27}
+  .bar.bad i{background:#E24B4A}
+  table{width:100%;border-collapse:collapse;background:var(--panel);
+        border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--line);font-size:12.5px}
+  th{background:#FAFAF8;color:var(--ink2);font-weight:500}
+  tr:last-child td{border-bottom:none}
+  td.num{font-variant-numeric:tabular-nums}
+  .pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11.5px;line-height:1.7}
+  .pill.ok{background:var(--green-bg);color:var(--green)}
+  .pill.warn{background:var(--amber-bg);color:var(--amber)}
+  .pill.bad{background:var(--red-bg);color:var(--red)}
+  .pill.mute{background:#F1F0EC;color:var(--ink2)}
+  button.act{background:var(--blue);color:#fff;border:none;padding:6px 14px;
+        border-radius:8px;cursor:pointer;font-size:12.5px}
+  button.act:hover{background:#134d87}
+  button.act.mini{padding:4px 10px;font-size:12px}
+  button.danger{background:#fff;color:var(--red);border:1px solid #F09595}
+  button.danger:hover{background:var(--red-bg)}
+  input,select{font:inherit;padding:6px 10px;border:1px solid var(--line2);
+        border-radius:8px;background:#fff;color:var(--ink)}
+  input:focus,select:focus{outline:none;border-color:var(--blue)}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .sep{height:16px}
+  .muted{color:var(--ink3);font-size:12px}
+  .err{background:var(--red-bg);color:var(--red);padding:10px 14px;border-radius:10px;
+       font-size:12.5px;margin-bottom:12px;white-space:pre-wrap}
+  section{display:none}
+  section.on{display:block}
+  pre.log{background:#1F1F1E;color:#E8E7E3;padding:14px;border-radius:10px;
+       font:12px/1.5 ui-monospace,Consolas,monospace;max-height:420px;overflow:auto;margin:0}
+  .toast{position:fixed;right:20px;bottom:20px;background:var(--ink);color:#fff;
+       padding:10px 16px;border-radius:10px;font-size:12.5px;opacity:0;
+       transition:opacity .2s;pointer-events:none}
+  .toast.show{opacity:1}
+  #login{position:fixed;inset:0;background:rgba(40,40,38,.45);display:flex;
+       align-items:center;justify-content:center;z-index:50}
+  #login .box{background:#fff;padding:26px 28px;border-radius:14px;width:300px}
+  #login h3{font-size:14px;font-weight:500;margin:0 0 14px}
+  #login input{width:100%;margin-bottom:10px}
+  #login button{width:100%}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>WINNAS</h1>
+  <span class="host" id="hostLabel">—</span>
+  <span class="spacer"></span>
+  <span class="muted" id="clock"></span>
+  <button class="ghost" onclick="refreshAll()">刷新</button>
+  <button class="ghost" onclick="logout()">退出</button>
+</header>
+
+<div class="wrap">
+  <nav>
+    <a href="#" data-tab="overview" class="on">概览</a>
+    <a href="#" data-tab="storage">存储</a>
+    <a href="#" data-tab="shares">共享</a>
+    <a href="#" data-tab="backup">备份</a>
+    <a href="#" data-tab="snapshot">快照</a>
+    <a href="#" data-tab="system">系统</a>
+  </nav>
+
+  <main>
+    <section id="overview" class="on">
+      <div id="ovErr"></div>
+      <div class="grid" id="ovCards"></div>
+      <div class="sep"></div>
+      <h2>卷</h2>
+      <table id="ovVols"></table>
+      <div class="sep"></div>
+      <h2>共享</h2>
+      <table id="ovShares"></table>
+    </section>
+
+    <section id="storage">
+      <div id="stErr"></div>
+      <h2>物理磁盘</h2>
+      <table id="stDisks"></table>
+      <div class="sep"></div>
+      <h2>分区分布</h2>
+      <table id="stParts"></table>
+    </section>
+
+    <section id="shares">
+      <div id="shErr"></div>
+      <h2>共享列表</h2>
+      <table id="shTable"></table>
+      <div class="sep"></div>
+      <h2>新建共享</h2>
+      <div class="card">
+        <div class="row">
+          <input id="shName" placeholder="共享名，如 Media" style="width:150px">
+          <input id="shPath" placeholder="路径，如 D:\NAS\Media" style="width:300px">
+          <input id="shAcc" placeholder="授权账户（留空=仅管理员）" style="width:220px">
+          <select id="shRo"><option value="0">读写</option><option value="1">只读</option></select>
+          <button class="act" onclick="createShare()">创建</button>
+        </div>
+      </div>
+      <div class="sep"></div>
+      <h2>当前连接会话</h2>
+      <table id="shSessions"></table>
+    </section>
+
+    <section id="backup">
+      <div id="bkErr"></div>
+      <div class="grid" id="bkCards"></div>
+      <div class="sep"></div>
+      <div class="row">
+        <button class="act" onclick="runBackup()">立即执行镜像</button>
+        <span class="muted">镜像会同步删除 D:\NAS 中已不存在的文件，请确认后再执行。</span>
+      </div>
+      <div class="sep"></div>
+      <h2>执行日志</h2>
+      <table id="bkLogs"></table>
+      <div class="sep"></div>
+      <pre class="log" id="bkLogView">点击上方日志文件名查看内容</pre>
+    </section>
+
+    <section id="snapshot">
+      <div id="snErr"></div>
+      <div class="row">
+        <select id="snVol"><option>D:\</option><option>C:\</option><option>E:\</option></select>
+        <button class="act" onclick="createSnapshot()">创建快照</button>
+        <span class="muted">卷影副本创建通常需要 1~10 秒，占用空间由系统按差异量决定。</span>
+      </div>
+      <div class="sep"></div>
+      <h2>现有快照</h2>
+      <table id="snTable"></table>
+    </section>
+
+    <section id="system">
+      <div id="syErr"></div>
+      <h2>关键服务</h2>
+      <table id="sySvc"></table>
+      <div class="sep"></div>
+      <h2>网络</h2>
+      <table id="syNet"></table>
+      <div class="sep"></div>
+      <h2>内存占用 TOP10</h2>
+      <table id="syProc"></table>
+    </section>
+  </main>
+</div>
+
+<div id="login"><div class="box">
+  <h3>登录 WINNAS</h3>
+  <input id="lgUser" placeholder="用户名" value="admin">
+  <input id="lgPass" type="password" placeholder="密码" onkeydown="if(event.key==='Enter')doLogin()">
+  <button class="act" onclick="doLogin()">登录</button>
+  <p class="muted" style="margin:10px 0 0">密码见 config.json 首次启动时输出的内容</p>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let CRED = sessionStorage.getItem('winnas') || '';
+let timer = null;
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function doLogin(){
+  const u = document.getElementById('lgUser').value.trim();
+  const p = document.getElementById('lgPass').value;
+  CRED = btoa(unescape(encodeURIComponent(u+':'+p)));
+  sessionStorage.setItem('winnas', CRED);
+  api('/api/overview').then(()=>{ document.getElementById('login').style.display='none'; refreshAll(); })
+    .catch(()=>{ toast('登录失败'); sessionStorage.removeItem('winnas'); });
+}
+function logout(){ sessionStorage.removeItem('winnas'); location.reload(); }
+
+async function api(path, method='GET', body=null){
+  const opt = { headers:{ 'Authorization':'Basic '+CRED }, method };
+  if (body){ opt.headers['Content-Type']='application/json'; opt.body = JSON.stringify(body); }
+  const r = await fetch(path, opt);
+  if (r.status === 401) throw new Error('auth');
+  const j = await r.json();
+  if (j.error) throw new Error(j.error);
+  return j.data;
+}
+const B = n => {
+  if (n === null || n === undefined) return '—';
+  const u = ['B','KB','MB','GB','TB']; let i = 0; let v = Number(n);
+  while (v >= 1024 && i < u.length-1){ v /= 1024; i++; }
+  return (i === 0 ? v : v.toFixed(v>=100?0:1)) + ' ' + u[i];
+};
+const pct = (a,b) => b ? Math.round(a/b*100) : 0;
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const dur = s => { const d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);
+  return (d?d+'天':'')+(h?h+'小时':'')+m+'分'; };
+
+function table(el, cols, rows){
+  const t = document.getElementById(el);
+  t.innerHTML = '<tr>' + cols.map(c=>`<th>${c.t}</th>`).join('') + '</tr>' +
+    rows.map(r=>'<tr>'+cols.map(c=>`<td class="${c.cls||''}">${c.f(r)}</td>`).join('')+'</tr>').join('');
+  if (!rows.length) t.innerHTML += `<tr><td colspan="${cols.length}" class="muted">暂无数据</td></tr>`;
+}
+
+async function loadOverview(){
+  try{
+    const d = await api('/api/overview');
+    document.getElementById('hostLabel').textContent = d.hostname + ' · ' + d.osCaption + ' ' + d.osBuild;
+    const memUsed = d.memTotal - d.memFree;
+    const p = pct(memUsed, d.memTotal);
+    document.getElementById('ovCards').innerHTML = `
+      <div class="card"><div class="k">CPU</div><div class="v">${d.cpuLoad}%</div>
+        <div class="s">${esc(d.cpuName)} · ${d.cores}核${d.threads}线程</div>
+        <div class="bar ${d.cpuLoad>80?'bad':d.cpuLoad>50?'warn':''}"><i style="width:${d.cpuLoad}%"></i></div></div>
+      <div class="card"><div class="k">内存</div><div class="v">${B(memUsed)}</div>
+        <div class="s">共 ${B(d.memTotal)} · 已用 ${p}%</div>
+        <div class="bar ${p>85?'bad':p>65?'warn':''}"><i style="width:${p}%"></i></div></div>
+      <div class="card"><div class="k">运行时间</div><div class="v">${dur(d.uptimeSec)}</div>
+        <div class="s">物理磁盘 ${d.disks.length} 块</div></div>
+      <div class="card"><div class="k">共享</div><div class="v">${d.shares.length}</div>
+        <div class="s">SMB 共享目录</div></div>`;
+    table('ovVols', [
+      {t:'盘符', f:r=>r.letter+':'},
+      {t:'卷标', f:r=>esc(r.label)||'—'},
+      {t:'文件系统', f:r=>r.fs},
+      {t:'容量', f:r=>`<span class="num">${B(r.size)}</span>`, cls:'num'},
+      {t:'已用', f:r=>{const u=r.size-r.free; const q=pct(u,r.size);
+        return `${B(u)}（${q}%）`;}, cls:'num'},
+      {t:'剩余', f:r=>B(r.free), cls:'num'},
+      {t:'健康', f:r=>`<span class="pill ${r.health==='Healthy'?'ok':'bad'}">${r.health}</span>`}
+    ], d.volumes);
+    table('ovShares', [
+      {t:'名称', f:r=>esc(r.name)}, {t:'路径', f:r=>esc(r.path)},
+      {t:'说明', f:r=>esc(r.description)||'—'}
+    ], d.shares);
+    document.getElementById('ovErr').innerHTML='';
+  }catch(e){ document.getElementById('ovErr').innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+}
+
+async function loadStorage(){
+  try{
+    const d = await api('/api/disks');
+    table('stDisks', [
+      {t:'编号', f:r=>r.id}, {t:'型号', f:r=>esc(r.model)},
+      {t:'介质', f:r=>r.media==='SSD'?'SSD':'HDD'},
+      {t:'容量', f:r=>B(r.size), cls:'num'},
+      {t:'通电(h)', f:r=>r.hours??'—', cls:'num'},
+      {t:'温度', f:r=>r.temp!=null?r.temp+'°C':'—', cls:'num'},
+      {t:'读错/写错', f:r=>`${r.readErr??0} / ${r.writeErr??0}`, cls:'num'},
+      {t:'健康', f:r=>`<span class="pill ${r.health==='Healthy'?'ok':'bad'}">${r.health}</span>`}
+    ], d.disks);
+    table('stParts', [
+      {t:'磁盘', f:r=>r.disk}, {t:'盘符', f:r=>r.letter+':'},
+      {t:'分区大小', f:r=>B(r.size), cls:'num'}
+    ], d.partitions);
+    document.getElementById('stErr').innerHTML='';
+  }catch(e){ document.getElementById('stErr').innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+}
+
+async function loadShares(){
+  try{
+    const d = await api('/api/shares');
+    table('shTable', [
+      {t:'名称', f:r=>esc(r.name)},
+      {t:'路径', f:r=>esc(r.path) + (r.exists?'':' <span class="pill bad">路径不存在</span>')},
+      {t:'权限', f:r=>r.access.map(a=>`<span class="pill mute">${esc(a.account)} · ${a.right}</span>`).join(' ')},
+      {t:'加密', f:r=>r.encrypt?'是':'否'},
+      {t:'操作', f:r=>`<button class="act mini danger" onclick="delShare('${esc(r.name)}')">删除</button>`}
+    ], d.shares);
+    table('shSessions', [
+      {t:'客户端', f:r=>esc(r.client)||'—'}, {t:'用户', f:r=>esc(r.user)||'—'},
+      {t:'打开文件', f:r=>r.opens, cls:'num'}
+    ], d.sessions);
+    document.getElementById('shErr').innerHTML='';
+  }catch(e){ document.getElementById('shErr').innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+}
+async function createShare(){
+  const name = document.getElementById('shName').value.trim();
+  const path = document.getElementById('shPath').value.trim();
+  const acc  = document.getElementById('shAcc').value.trim();
+  const ro   = document.getElementById('shRo').value === '1';
+  if (!name || !path) return toast('共享名与路径必填');
+  try{
+    await api('/api/shares/create','POST',{name,path,account:acc,read_only:ro});
+    toast('已创建 '+name); document.getElementById('shName').value='';
+    loadShares(); loadOverview();
+  }catch(e){ toast('失败：'+e.message); }
+}
+async function delShare(name){
+  if (!confirm(`确定删除共享「${name}」？\n只会移除共享，磁盘上的文件不受影响。`)) return;
+  try{ await api('/api/shares/delete','POST',{name}); toast('已删除'); loadShares(); loadOverview(); }
+  catch(e){ toast('失败：'+e.message); }
+}
+
+async function loadBackup(){
+  try{
+    const d = await api('/api/backup');
+    const t = d.task || {};
+    document.getElementById('bkCards').innerHTML = `
+      <div class="card"><div class="k">计划任务</div><div class="v">${esc(t.state||'—')}</div>
+        <div class="s">上次 ${esc(t.lastRun||'—')}</div></div>
+      <div class="card"><div class="k">下次运行</div><div class="v" style="font-size:15px">${esc(t.nextRun||'—')}</div>
+        <div class="s">结果码 ${t.lastResult??'—'}</div></div>
+      <div class="card"><div class="k">源目录</div>
+        <div class="v">${d.source?B(d.source.bytes):'—'}</div>
+        <div class="s">${d.source?d.source.files.toLocaleString()+' 个文件':'源不可读'}</div></div>
+      <div class="card"><div class="k">当前状态</div>
+        <div class="v">${d.running?'<span class="pill warn">正在复制</span>':'<span class="pill ok">空闲</span>'}</div>
+        <div class="s">robocopy 进程${d.running?'运行中':'未运行'}</div></div>`;
+    table('bkLogs', [
+      {t:'日志文件', f:r=>`<a href="#" onclick="viewLog('${esc(r.name)}');return false">${esc(r.name)}</a>`},
+      {t:'大小', f:r=>B(r.size), cls:'num'},
+      {t:'时间', f:r=>esc(r.time)}
+    ], d.logs);
+    document.getElementById('bkErr').innerHTML='';
+  }catch(e){ document.getElementById('bkErr').innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+}
+async function runBackup(){
+  if (!confirm('立即执行镜像备份？\n将同步删除目标盘中源目录已不存在的文件。')) return;
+  try{ const d = await api('/api/backup/run','POST',{}); toast('已启动，状态 '+d.state); loadBackup(); }
+  catch(e){ toast('失败：'+e.message); }
+}
+async function viewLog(name){
+  try{
+    const d = await api('/api/log?name='+encodeURIComponent(name));
+    document.getElementById('bkLogView').textContent = d.lines.join('\n');
+  }catch(e){ toast('读取失败：'+e.message); }
+}
+
+async function loadSnapshots(){
+  try{
+    const d = await api('/api/snapshots');
+    table('snTable', [
+      {t:'ID', f:r=>`<span class="muted">${esc(String(r.id).slice(0,8))}…</span>`},
+      {t:'卷', f:r=>esc(r.volume)},
+      {t:'创建时间', f:r=>esc(r.install)},
+      {t:'设备', f:r=>`<span class="muted">${esc(String(r.device).slice(0,42))}</span>`},
+      {t:'操作', f:r=>`<button class="act mini danger" onclick="delSnap('${esc(r.id)}')">删除</button>`}
+    ], d.shadows);
+    document.getElementById('snErr').innerHTML='';
+  }catch(e){ document.getElementById('snErr').innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+}
+async function createSnapshot(){
+  const vol = document.getElementById('snVol').value;
+  try{ const d = await api('/api/snapshots/create','POST',{volume:vol});
+    toast(d.returnValue===0?'快照创建成功':'返回码 '+d.returnValue); loadSnapshots(); }
+  catch(e){ toast('失败：'+e.message); }
+}
+async function delSnap(id){
+  if (!confirm('删除该快照？删除后无法通过它恢复文件。')) return;
+  try{ await api('/api/snapshots/delete','POST',{id}); toast('已删除'); loadSnapshots(); }
+  catch(e){ toast('失败：'+e.message); }
+}
+
+async function loadSystem(){
+  try{
+    const d = await api('/api/system');
+    table('sySvc', [
+      {t:'服务', f:r=>esc(r.name)}, {t:'名称', f:r=>esc(r.display)},
+      {t:'状态', f:r=>`<span class="pill ${r.status==='Running'?'ok':'mute'}">${r.status}</span>`},
+      {t:'启动', f:r=>r.start}
+    ], d.services);
+    table('syNet', [
+      {t:'接口', f:r=>esc(r.iface)}, {t:'IP', f:r=>esc(r.ip)+'/'+r.prefix},
+      {t:'默认网关', f:r=>esc(r.gateway)||'—'}, {t:'跃点', f:r=>r.metric, cls:'num'}
+    ], d.ips);
+    table('syProc', [
+      {t:'进程', f:r=>esc(r.name)}, {t:'内存', f:r=>B(r.mem), cls:'num'}
+    ], d.procs);
+    document.getElementById('syErr').innerHTML='';
+  }catch(e){ document.getElementById('syErr').innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+}
+
+const loaders = { overview:loadOverview, storage:loadStorage, shares:loadShares,
+                  backup:loadBackup, snapshot:loadSnapshots, system:loadSystem };
+let current = 'overview';
+
+function refreshAll(){ loaders[current](); }
+
+document.querySelectorAll('nav a').forEach(a=>{
+  a.onclick = e => {
+    e.preventDefault();
+    document.querySelectorAll('nav a').forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('section').forEach(x=>x.classList.remove('on'));
+    a.classList.add('on');
+    current = a.dataset.tab;
+    document.getElementById(current).classList.add('on');
+    loaders[current]();
+  };
+});
+
+setInterval(()=>{
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('zh-CN');
+}, 1000);
+
+if (CRED){
+  document.getElementById('login').style.display='none';
+  refreshAll();
+  loadOverview();
+  setInterval(()=>{ if(current==='overview') loadOverview(); }, 5000);
+} else {
+  document.getElementById('login').style.display='flex';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,403 @@
+<UserControl x:Class="Winnas.Console.Views.OverviewView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:Winnas.Console.Controls"
+             Background="{DynamicResource PageBgBrush}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="22,18,22,22">
+
+            <!-- page help  -->
+            <Border Style="{StaticResource HintBar}" Margin="0,0,0,14"
+                    Visibility="{Binding HelpVisible, Converter={StaticResource BoolVis}}">
+                <TextBlock Text="{Binding HelpText, Mode=OneWay}" Style="{StaticResource HintBarText}"/>
+            </Border>
+
+            <!-- error banner  -->
+            <Border Background="{DynamicResource DangerSoftBrush}" BorderBrush="{DynamicResource DangerBorderBrush}" BorderThickness="1" CornerRadius="8"
+                    Padding="12,10" Margin="0,0,0,14"
+                    Visibility="{Binding Error, Converter={StaticResource StrVis}}">
+                <TextBlock Text="{Binding Error}" Foreground="{DynamicResource DangerDarkBrush}" FontSize="12" TextWrapping="Wrap"/>
+            </Border>
+
+            <Border Background="{DynamicResource SuccessSoftBrush}" BorderBrush="{DynamicResource SuccessBorderBrush}" BorderThickness="1" CornerRadius="8"
+                    Padding="12,10" Margin="0,0,0,14"
+                    Visibility="{Binding Notice, Converter={StaticResource StrVis}}">
+                <TextBlock Text="{Binding Notice}" Foreground="{DynamicResource SuccessBrush}" FontSize="12" TextWrapping="Wrap"/>
+            </Border>
+
+            <!-- metrics  -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource Card}" Margin="0,0,12,0">
+                    <StackPanel>
+                        <Grid>
+                            <TextBlock Text="CPU 使用率" Style="{StaticResource Label}"/>
+                            <TextBlock Text="{Binding SourceText, Mode=OneWay}" FontSize="10"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextMutedBrush}"
+                                       TextTrimming="CharacterEllipsis"/>
+                        </Grid>
+                        <TextBlock Margin="0,6,0,0">
+                            <Run Text="{Binding LiveCpu, FallbackValue=0, Mode=OneWay}" FontSize="26" FontWeight="SemiBold"
+                                 Foreground="{DynamicResource TextMainBrush}"/>
+                            <Run Text="%" FontSize="14" Foreground="{DynamicResource TextMutedBrush}"/>
+                        </TextBlock>
+                        <ProgressBar Value="{Binding CpuRatio, Mode=OneWay}" Style="{StaticResource ThinBar}"
+                                     Height="7" Margin="0,10,0,0"
+                                     Foreground="{Binding CpuRatio, Converter={StaticResource UsageBrush}}"/>
+                        <TextBlock Margin="0,8,0,0" FontSize="11.5" Foreground="{DynamicResource TextMutedBrush}"
+                                   Text="{Binding Info.CpuName, FallbackValue='—'}" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock FontSize="11.5" Foreground="{DynamicResource TextMutedBrush}">
+                            <Run Text="{Binding Info.Cores, FallbackValue=0, Mode=OneWay}"/>
+                            <Run Text=" 核 / "/>
+                            <Run Text="{Binding Info.Threads, FallbackValue=0, Mode=OneWay}"/>
+                            <Run Text=" 线程"/>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="1" Style="{StaticResource Card}" Margin="0,0,12,0">
+                    <StackPanel>
+                        <TextBlock Text="内存占用" Style="{StaticResource Label}"/>
+                        <TextBlock Text="{Binding MemUsedText}" Style="{StaticResource Big}" Margin="0,6,0,0"/>
+                        <ProgressBar Value="{Binding MemUsedRatio, Mode=OneWay}" Style="{StaticResource ThinBar}"
+                                     Height="7" Margin="0,10,0,0"
+                                     Foreground="{Binding MemUsedRatio, Converter={StaticResource UsageBrush}}"/>
+                        <TextBlock Margin="0,8,0,0" FontSize="11.5" Foreground="{DynamicResource TextMutedBrush}">
+                            <Run Text="共 "/>
+                            <Run Text="{Binding MemTotalText, Mode=OneWay}"/>
+                        </TextBlock>
+                        <TextBlock FontSize="11.5" Foreground="{DynamicResource TextMutedBrush}">
+                            <Run Text="可用 "/>
+                            <Run Text="{Binding Info.MemFree, Converter={StaticResource Bytes}, FallbackValue='—', Mode=OneWay}"/>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource Card}" Margin="0,0,12,0">
+                    <StackPanel>
+                        <TextBlock Text="运行时长" Style="{StaticResource Label}"/>
+                        <TextBlock Text="{Binding UptimeText}" Style="{StaticResource MetricValue}"
+                                   Margin="0,6,0,0" FontSize="22"/>
+                        <TextBlock Margin="0,10,0,0" FontSize="11.5" Foreground="{DynamicResource TextMutedBrush}">
+                            <Run Text="开机于 "/>
+                            <Run Text="{Binding BootText, Mode=OneWay}"/>
+                        </TextBlock>
+                        <TextBlock FontSize="11.5" Foreground="{DynamicResource TextMutedBrush}"
+                                   Text="{Binding Info.OsCaption, FallbackValue='—'}" TextTrimming="CharacterEllipsis"
+                                   Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="3" Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Text="SMB 共享" Style="{StaticResource Label}"/>
+                        <TextBlock Margin="0,6,0,0">
+                            <Run Text="{Binding Info.ShareCount, FallbackValue=0, Mode=OneWay}" FontSize="26" FontWeight="SemiBold"
+                                 Foreground="{DynamicResource TextMainBrush}"/>
+                            <Run Text=" 个" FontSize="14" Foreground="{DynamicResource TextMutedBrush}"/>
+                        </TextBlock>
+                        <TextBlock Margin="0,10,0,0" FontSize="11.5" Foreground="{DynamicResource TextMutedBrush}">
+                            <Run Text="物理磁盘 "/>
+                            <Run Text="{Binding Info.Disks.Count, FallbackValue=0, Mode=OneWay}"/>
+                            <Run Text=" 块"/>
+                        </TextBlock>
+                        <TextBlock FontSize="11.5" Foreground="{DynamicResource TextMutedBrush}"
+                                   Text="{Binding Info.HostName, FallbackValue='—'}"
+                                   TextTrimming="CharacterEllipsis" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- live rates  -->
+            <Border Style="{StaticResource Card}" Margin="0,14,0,0" Padding="18,14"
+                    Visibility="{Binding MetricsVisible, Converter={StaticResource BoolVis}}">
+                <StackPanel>
+                    <Grid>
+                        <TextBlock Text="实时速率" Style="{StaticResource CardTitle}" VerticalAlignment="Center"/>
+                        <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="11.5"
+                                   Foreground="{DynamicResource TextMutedBrush}">
+                            <Run Text="峰值 磁盘 "/>
+                            <Run Text="{Binding DiskPeakText, Mode=OneWay}" FontWeight="SemiBold"/>
+                            <Run Text=" ｜ 网络 "/>
+                            <Run Text="{Binding NetPeakText, Mode=OneWay}" FontWeight="SemiBold"/>
+                            <Run Text=" ｜ "/>
+                            <Run Text="{Binding NetCapacityText, Mode=OneWay}"/>
+                        </TextBlock>
+                    </Grid>
+
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <Grid>
+                                <TextBlock Text="磁盘 IO" FontSize="12" Foreground="{DynamicResource TextMutedBrush}"
+                                           VerticalAlignment="Center"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <TextBlock FontSize="12" Foreground="{DynamicResource PrimaryBrush}">
+                                        <Run Text="读 "/><Run Text="{Binding DiskReadText, Mode=OneWay}" FontWeight="SemiBold"/>
+                                    </TextBlock>
+                                    <TextBlock FontSize="12" Foreground="{DynamicResource WarningBrush}" Margin="14,0,0,0">
+                                        <Run Text="写 "/><Run Text="{Binding DiskWriteText, Mode=OneWay}" FontWeight="SemiBold"/>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Grid>
+                            <controls:RateChart Height="64" Margin="0,6,0,0"
+                                                Primary="{Binding DiskReadSeries}"
+                                                Secondary="{Binding DiskWriteSeries}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <Grid>
+                                <TextBlock Text="网络吞吐" FontSize="12" Foreground="{DynamicResource TextMutedBrush}"
+                                           VerticalAlignment="Center"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <TextBlock FontSize="12" Foreground="{DynamicResource PrimaryBrush}">
+                                        <Run Text="收 "/><Run Text="{Binding NetInText, Mode=OneWay}" FontWeight="SemiBold"/>
+                                    </TextBlock>
+                                    <TextBlock FontSize="12" Foreground="{DynamicResource WarningBrush}" Margin="14,0,0,0">
+                                        <Run Text="发 "/><Run Text="{Binding NetOutText, Mode=OneWay}" FontWeight="SemiBold"/>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Grid>
+                            <controls:RateChart Height="64" Margin="0,6,0,0"
+                                                Primary="{Binding NetInSeries}"
+                                                Secondary="{Binding NetOutSeries}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Margin="0,8,0,0" Style="{StaticResource CardHint}"
+                               Text="每 2 秒采样一次，横轴为最近 2 分钟。纵轴随峰值自适应；性能计数器给出的是瞬时速率，与任务管理器一致。"/>
+                </StackPanel>
+            </Border>
+
+            <Border Background="{DynamicResource WarningSoftBrush}" BorderBrush="{DynamicResource WarningBorderBrush}" BorderThickness="1" CornerRadius="8"
+                    Padding="12,10" Margin="0,14,0,0"
+                    Visibility="{Binding MetricsNote, Converter={StaticResource StrVis}}">
+                <TextBlock Text="{Binding MetricsNote}" Foreground="{DynamicResource WarningTextBrush}" FontSize="12" TextWrapping="Wrap"/>
+            </Border>
+
+            <!-- volumes  -->
+            <Border Style="{StaticResource Card}" Margin="0,14,0,0" Padding="18,14">
+                <StackPanel>
+                    <TextBlock Text="卷容量" Style="{StaticResource CardTitle}"/>
+                    <ItemsControl ItemsSource="{Binding Info.Volumes}" Margin="0,10,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="46"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="190"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="{Binding Drive}" FontSize="13.5"
+                                               FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Label}" FontSize="12"
+                                               Foreground="{DynamicResource TextMutedBrush}"
+                                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+
+                                    <ProgressBar Grid.Column="2" Value="{Binding UsedRatio, Mode=OneWay}" Maximum="1"
+                                                 Style="{StaticResource ThinBar}" Height="8"
+                                                 Margin="12,0,16,0" VerticalAlignment="Center"
+                                                 Foreground="{Binding UsedRatio, Converter={StaticResource UsageBrush}}"/>
+
+                                    <TextBlock Grid.Column="3" Text="{Binding UsageText}" FontSize="12"
+                                               Foreground="{DynamicResource TextMainBrush}"
+                                               HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="尚未获取数据" HorizontalAlignment="Center" Margin="0,8,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource CardHint}">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Info.Volumes.Count}" Value="0">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <!-- disks  -->
+            <Border Style="{StaticResource Card}" Margin="0,14,0,0" Padding="18,14">
+                <StackPanel>
+                    <TextBlock Text="物理磁盘" Style="{StaticResource CardTitle}"/>
+                    <ItemsControl ItemsSource="{Binding Info.Disks}" Margin="0,10,0,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                        CornerRadius="8" Padding="14,10" Margin="0,0,10,10" Width="250">
+                                    <StackPanel>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Ellipse Width="8" Height="8" Margin="0,0,8,0" VerticalAlignment="Center"
+                                                     Fill="{Binding Health, Converter={StaticResource HealthBrush}}"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding Model}" FontSize="12.5"
+                                                       FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
+                                                       VerticalAlignment="Center"/>
+                                        </Grid>
+                                        <TextBlock Margin="0,6,0,0" FontSize="11.5"
+                                                   Foreground="{DynamicResource TextMutedBrush}">
+                                            <Run Text="{Binding MediaText, Mode=OneWay}"/>
+                                            <Run Text=" · "/>
+                                            <Run Text="{Binding Size, Converter={StaticResource Bytes}, Mode=OneWay}"/>
+                                        </TextBlock>
+                                        <TextBlock FontSize="11" Foreground="{DynamicResource TextMutedBrush}"
+                                                   Margin="0,2,0,0">
+                                            <Run Text="磁盘 "/>
+                                            <Run Text="{Binding DeviceId, Mode=OneWay}"/>
+                                            <Run Text=" · "/>
+                                            <Run Text="{Binding HealthText, Mode=OneWay}"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <!-- health inspection  -->
+            <Border Style="{StaticResource Card}" Margin="0,14,0,0" Padding="18,14">
+                <StackPanel>
+                    <Grid>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="健康体检" Style="{StaticResource CardTitle}" VerticalAlignment="Center"/>
+                            <Border Style="{StaticResource Badge}" Margin="12,0,0,0"
+                                    Background="{DynamicResource HeaderBgBrush}"
+                                    Visibility="{Binding Report, Converter={StaticResource NullVis}}">
+                                <TextBlock FontSize="11.5" FontWeight="SemiBold">
+                                    <Run Text="评分 "/>
+                                    <Run Text="{Binding Report.Score, Mode=OneWay}"
+                                         Foreground="{Binding Report.Score, Converter={StaticResource ScoreBrush}}"/>
+                                    <Run Text=" · " Foreground="{DynamicResource TextMutedBrush}"/>
+                                    <Run Text="{Binding Report.ScoreText, Mode=OneWay}"
+                                         Foreground="{Binding Report.Score, Converter={StaticResource ScoreBrush}}"/>
+                                </TextBlock>
+                            </Border>
+                            <Border Style="{StaticResource Badge}" Background="{DynamicResource DangerSoftBrush}" Margin="8,0,0,0"
+                                    Visibility="{Binding Report.CriticalCount, Converter={StaticResource CountVis}}">
+                                <TextBlock Style="{StaticResource BadgeText}" Foreground="{DynamicResource DangerTextBrush}">
+                                    <Run Text="严重 "/>
+                                    <Run Text="{Binding Report.CriticalCount, Mode=OneWay}"/>
+                                </TextBlock>
+                            </Border>
+                            <Border Style="{StaticResource Badge}" Background="{DynamicResource WarningSoftBrush}" Margin="8,0,0,0"
+                                    Visibility="{Binding Report.WarnCount, Converter={StaticResource CountVis}}">
+                                <TextBlock Style="{StaticResource BadgeText}" Foreground="{DynamicResource WarningTextBrush}">
+                                    <Run Text="警告 "/>
+                                    <Run Text="{Binding Report.WarnCount, Mode=OneWay}"/>
+                                </TextBlock>
+                            </Border>
+                        </StackPanel>
+
+                        <Button HorizontalAlignment="Right" Content="重新检查" Padding="10,6"
+                                Style="{StaticResource DefaultButton}" VerticalAlignment="Center"
+                                Command="{Binding InspectCommand}"
+                                IsEnabled="{Binding Inspecting, Converter={StaticResource InvertBool}}"/>
+                    </Grid>
+
+                    <TextBlock Margin="0,8,0,0" Style="{StaticResource CardHint}"
+                               Visibility="{Binding Report, Converter={StaticResource NullVis}}"
+                               Text="{Binding Report.SummaryText, Mode=OneWay}"/>
+
+                    <StackPanel Visibility="{Binding Report, Converter={StaticResource NullVis}}">
+                    <ItemsControl ItemsSource="{Binding Report.Findings}" Margin="0,10,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                                        CornerRadius="8" Padding="12,10" Margin="0,0,0,8">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="3"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <Rectangle Grid.Column="0" RadiusX="1.5" RadiusY="1.5">
+                                            <Rectangle.Style>
+                                                <!-- 默认色放在 Setter 里而不是本地值：本地值会压住
+                                                     下面的 DataTrigger，严重级别就永远显示成蓝色。 -->
+                                                <Style TargetType="Rectangle">
+                                                    <Setter Property="Fill" Value="{DynamicResource PrimaryBrush}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Severity}" Value="1">
+                                                            <Setter Property="Fill" Value="{DynamicResource WarningBrush}"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Severity}" Value="0">
+                                                            <Setter Property="Fill" Value="{DynamicResource DangerBrush}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Rectangle.Style>
+                                        </Rectangle>
+
+                                        <StackPanel Grid.Column="1" Margin="11,0,0,0">
+                                            <StackPanel Orientation="Horizontal">
+                                                <Border Style="{StaticResource Pill}" Padding="7,2" Margin="0,0,8,0"
+                                                        Background="{DynamicResource InfoSoftBrush}">
+                                                    <TextBlock Text="{Binding SeverityText}" FontSize="10.5"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="{Binding Severity,
+                                                                 Converter={StaticResource SeverityBrush}}"/>
+                                                </Border>
+                                                <TextBlock Text="{Binding Title}" FontSize="12.5"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource TextMainBrush}"
+                                                           VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding Detail}" FontSize="11.5"
+                                                       Foreground="{DynamicResource TextMutedBrush}"
+                                                       TextWrapping="Wrap" Margin="0,5,0,0"/>
+                                            <TextBlock Text="{Binding Advice}" FontSize="11.5"
+                                                       Foreground="{DynamicResource TextMainBrush}"
+                                                       TextWrapping="Wrap" Margin="0,4,0,0" Opacity="0.85"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Border Background="{DynamicResource SuccessSoftBrush}" BorderBrush="{DynamicResource SuccessBorderBrush}" BorderThickness="1"
+                            CornerRadius="8" Padding="12,10" Margin="0,4,0,0"
+                            Visibility="{Binding Report.Findings.Count, Converter={StaticResource CountVis},
+                                         ConverterParameter=inverse}">
+                        <TextBlock Text="未发现需要立即处理的问题。" FontSize="12" Foreground="{DynamicResource SuccessBrush}"/>
+                    </Border>
+                    </StackPanel>
+
+                    <TextBlock Margin="0,8,0,0" Style="{StaticResource CardHint}"
+                               Visibility="{Binding Report, Converter={StaticResource NullVis},
+                                            ConverterParameter=inverse}"
+                               Text="连接成功后会自动做一次体检。它把容量、温度、错误计数、备份状态与共享权限交叉起来判断，而不只是复述上面的数字。"/>
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl> 

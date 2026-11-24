@@ -1,0 +1,206 @@
+<UserControl x:Class="Winnas.Console.Views.SnapshotsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{DynamicResource PageBgBrush}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="22,18,22,22">
+
+            <Border Style="{StaticResource HintBar}" Margin="0,0,0,12"
+                    Visibility="{Binding HelpVisible, Converter={StaticResource BoolVis}}">
+                <TextBlock Text="{Binding HelpText, Mode=OneWay}" Style="{StaticResource HintBarText}"/>
+            </Border>
+
+
+            <Border Background="{DynamicResource DangerSoftBrush}" BorderBrush="{DynamicResource DangerBorderBrush}" BorderThickness="1" CornerRadius="8"
+                    Padding="12,10" Margin="0,0,0,12"
+                    Visibility="{Binding Error, Converter={StaticResource StrVis}}">
+                <TextBlock Text="{Binding Error}" Foreground="{DynamicResource DangerDarkBrush}" FontSize="12" TextWrapping="Wrap"/>
+            </Border>
+
+            <Border Background="{DynamicResource SuccessSoftBrush}" BorderBrush="{DynamicResource SuccessBorderBrush}" BorderThickness="1" CornerRadius="8"
+                    Padding="12,10" Margin="0,0,0,12"
+                    Visibility="{Binding Notice, Converter={StaticResource StrVis}}">
+                <TextBlock Text="{Binding Notice}" Foreground="{DynamicResource SuccessBrush}" FontSize="12" TextWrapping="Wrap"/>
+            </Border>
+
+            <!-- ==================================================== create -->
+            <Border Style="{StaticResource Card}" Padding="16,14">
+                <StackPanel>
+                    <TextBlock Text="创建卷影副本" Style="{StaticResource CardTitle}"/>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                        <TextBlock Text="目标卷" Style="{StaticResource FieldLabel}" VerticalAlignment="Center"
+                                   Margin="0,0,10,0"/>
+                        <ComboBox ItemsSource="{Binding Volumes}"
+                                  SelectedItem="{Binding TargetVolume}"
+                                  Width="120" Margin="0,0,12,0"/>
+                        <Button Content="创建快照" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding CreateSnapshotCommand}" MinWidth="100"/>
+                    </StackPanel>
+
+                    <TextBlock Text="卷影副本（VSS 快照）可用于回滚误删文件。每卷最多 64 个快照，创建需要目标机管理员权限。"
+                               Style="{StaticResource CardHint}" Margin="0,10,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- ================================================= policies -->
+            <Border Style="{StaticResource Card}" Margin="0,12,0,0" Padding="16,14">
+                <StackPanel>
+                    <Grid>
+                        <TextBlock Text="定时快照策略" Style="{StaticResource CardTitle}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding TaskStateText, Mode=OneWay}" FontSize="11.5"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextMutedBrush}"/>
+                    </Grid>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                        <Button Content="＋ 新增策略" Style="{StaticResource PrimaryButton}"
+                                Command="{Binding OpenPolicyFormCommand}" Margin="0,0,8,0"/>
+                        <Button Content="立即执行全部" Style="{StaticResource DefaultButton}"
+                                Command="{Binding RunPoliciesNowCommand}" Margin="0,0,8,0"/>
+                        <Button Content="注册自动执行" Style="{StaticResource DefaultButton}"
+                                Command="{Binding RegisterPolicyTaskCommand}" Margin="0,0,8,0"
+                                Visibility="{Binding TaskRegistered, Converter={StaticResource BoolVis},
+                                             ConverterParameter=inverse}"/>
+                        <Button Content="撤销自动执行" Style="{StaticResource DefaultButton}"
+                                Command="{Binding UnregisterPolicyTaskCommand}"
+                                Visibility="{Binding TaskRegistered, Converter={StaticResource BoolVis}}"/>
+                    </StackPanel>
+
+                    <!-- ============================================ form -->
+                    <Border Margin="0,12,0,0" Padding="14,12" CornerRadius="8" Background="{DynamicResource RowAltBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
+                            Visibility="{Binding PolicyFormVisible, Converter={StaticResource BoolVis}}">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                                    <TextBlock Text="卷" Style="{StaticResource FieldLabel}"/>
+                                    <ComboBox ItemsSource="{Binding Volumes}"
+                                              SelectedItem="{Binding PolicyVolume}" Width="90"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Margin="0,0,12,0">
+                                    <TextBlock Text="频率" Style="{StaticResource FieldLabel}"/>
+                                    <ComboBox Width="100" SelectedIndex="{Binding PolicyFrequency}">
+                                        <ComboBoxItem Content="每天"/>
+                                        <ComboBoxItem Content="每周"/>
+                                        <ComboBoxItem Content="每小时"/>
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2" Margin="0,0,12,0">
+                                    <TextBlock Text="时间（时:分）" Style="{StaticResource FieldLabel}"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBox Width="46" Text="{Binding PolicyHour}"/>
+                                        <TextBlock Text=":" VerticalAlignment="Center" Margin="4,0"/>
+                                        <TextBox Width="46" Text="{Binding PolicyMinute}"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="3" Margin="0,0,12,0"
+                                            Visibility="{Binding ShowWeekly, Converter={StaticResource BoolVis}}">
+                                    <TextBlock Text="星期" Style="{StaticResource FieldLabel}"/>
+                                    <ComboBox Width="80" SelectedIndex="{Binding PolicyDayOfWeek}">
+                                        <ComboBoxItem Content="周日"/>
+                                        <ComboBoxItem Content="周一"/>
+                                        <ComboBoxItem Content="周二"/>
+                                        <ComboBoxItem Content="周三"/>
+                                        <ComboBoxItem Content="周四"/>
+                                        <ComboBoxItem Content="周五"/>
+                                        <ComboBoxItem Content="周六"/>
+                                    </ComboBox>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="4">
+                                    <TextBlock Text="保留个数" Style="{StaticResource FieldLabel}"/>
+                                    <TextBox Width="60" Text="{Binding PolicyKeep}"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                <Button Content="保存策略" Style="{StaticResource PrimaryButton}"
+                                        Command="{Binding AddPolicyCommand}" Margin="0,0,8,0" MinWidth="88"/>
+                                <Button Content="取消" Style="{StaticResource DefaultButton}"
+                                        Command="{Binding CancelPolicyFormCommand}" MinWidth="72"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <DataGrid Margin="0,12,0,0" ItemsSource="{Binding Policies}"
+                              SelectedItem="{Binding SelectedPolicy, Mode=TwoWay}"
+                              MaxHeight="220" BorderThickness="0">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="卷" Binding="{Binding Volume}" Width="90"/>
+                            <DataGridTextColumn Header="计划" Binding="{Binding FrequencyText}" Width="170"/>
+                            <DataGridTextColumn Header="保留" Binding="{Binding Keep}" Width="70"/>
+                            <DataGridTextColumn Header="上次执行" Width="150"
+                                                Binding="{Binding LastRun, Converter={StaticResource Date}}"/>
+                            <DataGridTextColumn Header="最近结果" Width="*" Binding="{Binding LastError}"/>
+                            <DataGridTemplateColumn Header="操作" Width="80">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="删除" Style="{StaticResource LinkButton}"
+                                                Foreground="{DynamicResource DangerBrush}"
+                                                Command="{Binding DataContext.RemovePolicyCommand,
+                                                          RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <TextBlock Margin="0,10,0,0" Style="{StaticResource CardHint}"
+                               Text="自动执行依赖一个系统计划任务（每小时触发一次），程序启动时才判断哪条策略真正到期，所以每天/每周/每小时三种计划都能用同一个触发器。"/>
+                </StackPanel>
+            </Border>
+
+            <!-- ====================================================== list -->
+            <Border Style="{StaticResource Card}" Margin="0,12,0,0" Padding="0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Padding="16,12" BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <TextBlock Text="已有快照" Style="{StaticResource CardTitle}"/>
+                    </Border>
+
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding Snapshots}" MaxHeight="460" BorderThickness="0">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="卷" Binding="{Binding VolumeName}" Width="330"/>
+                            <DataGridTextColumn Header="创建时间" Width="160"
+                                                Binding="{Binding InstallDate, Converter={StaticResource Date}}"/>
+                            <DataGridTextColumn Header="可访问" Width="80"
+                                                Binding="{Binding ClientAccessible}"/>
+                            <DataGridTextColumn Header="设备对象" Width="*"
+                                                Binding="{Binding DeviceObject}"/>
+                            <DataGridTemplateColumn Header="操作" Width="90">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="删除" Style="{StaticResource LinkButton}"
+                                                Foreground="{DynamicResource DangerBrush}"
+                                                Command="{Binding DataContext.DeleteSnapshotCommand,
+                                                          RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl> 

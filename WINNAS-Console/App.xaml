@@ -1,0 +1,74 @@
+﻿<Application x:Class="Winnas.Console.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Winnas.Console.ViewModels"
+             xmlns:views="clr-namespace:Winnas.Console.Views"
+             xmlns:conv="clr-namespace:Winnas.Console.Converters">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Palette first: it only holds colours and Styles.xaml looks
+                     them all up through DynamicResource. ThemeManager swaps
+                     this one entry at runtime to change the skin. -->
+                <ResourceDictionary Source="/Themes/Palette.day.xaml"/>
+                <ResourceDictionary Source="/Themes/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <conv:BytesConverter x:Key="Bytes"/>
+            <conv:UptimeConverter x:Key="Uptime"/>
+            <conv:DateConverter x:Key="Date"/>
+            <conv:HoursConverter x:Key="Hours"/>
+            <conv:TemperatureConverter x:Key="Temp"/>
+            <conv:UsageBrushConverter x:Key="UsageBrush"/>
+            <conv:HealthBrushConverter x:Key="HealthBrush"/>
+            <conv:BoolToVisibilityConverter x:Key="BoolVis"/>
+            <conv:StringToVisibilityConverter x:Key="StrVis"/>
+            <conv:PercentConverter x:Key="Percent"/>
+            <conv:PartitionsConverter x:Key="Partitions"/>
+            <conv:ShareAccessConverter x:Key="ShareAccess"/>
+            <conv:InvertBoolConverter x:Key="InvertBool"/>
+            <conv:CountToVisibilityConverter x:Key="CountVis"/>
+            <conv:NullToVisibilityConverter x:Key="NullVis"/>
+            <conv:LogLevelBrushConverter x:Key="LogLevelBrush"/>
+            <conv:SeverityBrushConverter x:Key="SeverityBrush"/>
+            <conv:ScoreBrushConverter x:Key="ScoreBrush"/>
+
+            <DataTemplate DataType="{x:Type vm:OverviewViewModel}">
+                <views:OverviewView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:StorageViewModel}">
+                <views:StorageView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:SharesViewModel}">
+                <views:SharesView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:FilesViewModel}">
+                <views:FilesView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:BackupViewModel}">
+                <views:BackupView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:SnapshotsViewModel}">
+                <views:SnapshotsView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:SystemViewModel}">
+                <views:SystemView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:AiViewModel}">
+                <views:AiView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:HelpViewModel}">
+                <views:HelpView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:RemoteViewModel}">
+                <views:RemoteView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+                <views:SettingsView/>
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:ConnectionsViewModel}">
+                <views:ConnectionsView/>
+            </DataTemplate>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

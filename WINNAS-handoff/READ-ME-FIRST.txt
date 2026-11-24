@@ -1,0 +1,28 @@
+﻿BEFORE YOU RUN THIS ON A NEW PC
+==============================
+
+1. Edit service.cmd and start.cmd
+   Replace the line:
+       set PY=C:\Users\Shawn\AppData\Local\Programs\Python\Python310\pythonw.exe
+   with the real pythonw.exe path on this machine, for example:
+       set PY=C:\Python310\pythonw.exe
+   Find it by running:  where pythonw
+
+2. Edit config.json if port 8081 is taken, or if backup paths differ:
+       "port": 8081
+       "nas_source": "D:\\NAS"
+       "backup_mirror_task": "NAS Local Mirror"
+       "backup_log_dir": "C:\\Users\\Shawn\\NAS-Backup\\logs"
+
+3. Test:
+       python -m py_compile app.py
+       python app.py
+   then open http://127.0.0.1:8081
+
+4. Login user: admin
+   Password: 4O1Y8yu8xzBW
+   (delete config.json to have a new random password generated instead)
+
+NOTE: this tool manages the computer it runs on. Running it on a dev PC
+      will show that PC's disks and shares, not the NAS.
+      See the handoff document, section 1.6.
