@@ -38,4 +38,30 @@ public static class Shell
             return OpResult.Fail("无法打开文件：" + OpResult.From(ex).Message);
         }
     }
+
+    /// <summary>
+    /// Hands an http/https/mailto link to the user's default browser or mail
+    /// client. The console itself deliberately does not fetch the human-facing
+    /// github.com page: on this network only api.github.com is reachable, while
+    /// the browser has its own (often different) path out.
+    /// </summary>
+    public static OpResult OpenUrl(string url)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(url)) return OpResult.Fail("链接为空");
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var u) ||
+                (u.Scheme != Uri.UriSchemeHttp &&
+                 u.Scheme != Uri.UriSchemeHttps &&
+                 u.Scheme != Uri.UriSchemeMailto))
+                return OpResult.Fail("不是有效的网页或邮件链接：" + url);
+
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            return OpResult.Good("已打开 " + url);
+        }
+        catch (Exception ex)
+        {
+            return OpResult.Fail("无法打开链接：" + OpResult.From(ex).Message);
+        }
+    }
 }

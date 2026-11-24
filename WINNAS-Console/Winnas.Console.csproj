@@ -13,7 +13,7 @@
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <DebugType>none</DebugType>
-    <Version>1.6.0</Version>
+    <Version>1.6.1</Version>
     <AssemblyName>WINNAS.Console</AssemblyName>
     <RootNamespace>Winnas.Console</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>

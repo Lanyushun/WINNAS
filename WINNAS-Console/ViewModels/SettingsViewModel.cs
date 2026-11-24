@@ -124,6 +124,38 @@ public partial class SettingsViewModel : PageViewModel
         }
     }
 
+    // ------------------------------------------------------- 更新与联系方式
+
+    /// <summary>"owner/repo" or a full GitHub URL; invalid values fall back in UpdateChecker.</summary>
+    public string UpdateRepo
+    {
+        get => AppState.Settings.UpdateRepo;
+        set
+        {
+            var v = (value ?? "").Trim();
+            if (v == AppState.Settings.UpdateRepo) return;
+            AppState.Settings.UpdateRepo = v;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(RepoUrl));
+        }
+    }
+
+    public bool CheckUpdateOnStartup
+    {
+        get => AppState.Settings.CheckUpdateOnStartup;
+        set
+        {
+            if (value == AppState.Settings.CheckUpdateOnStartup) return;
+            AppState.Settings.CheckUpdateOnStartup = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string RepoUrl => UpdateChecker.RepoUrl;
+    public string ContactEmail => UpdateChecker.ContactEmail;
+
+    [ObservableProperty] private string? updateStatusText;
+
     // ----------------------------------------------------------- AI 助手
 
     public ObservableCollection<string> Models { get; } = new();
@@ -373,6 +405,26 @@ public partial class SettingsViewModel : PageViewModel
     [RelayCommand]
     private void ExportConfig() => Shell.OpenFolder(AppState.Dir);
 
+    [RelayCommand]
+    private void OpenRepo() => UpdateStatusText = Shell.OpenUrl(UpdateChecker.RepoUrl).Message;
+
+    [RelayCommand]
+    private void ContactAuthor() => UpdateStatusText = Shell.OpenUrl(UpdateChecker.MailUrl).Message;
+
+    [RelayCommand]
+    private async Task CheckUpdate()
+    {
+        UpdateStatusText = "正在检查 GitHub Release…";
+        var info = await UpdateChecker.CheckAsync();
+        UpdateStatusText = info.Message;
+        ActivityLog.Write(info.HasNew ? LogLevel.Warn : LogLevel.Ok, "更新", info.Message, info.ReleaseUrl);
+
+        if (info.HasNew && DialogService.Confirm(
+                $"发现新版本 {info.LatestVersion}（当前 v{info.CurrentVersion}）。\n\n" +
+                $"发布页：{info.ReleaseUrl}\n\n是否打开下载页？", "检查更新"))
+            UpdateStatusText = Shell.OpenUrl(info.DownloadUrl ?? info.ReleaseUrl ?? UpdateChecker.ReleasesUrl).Message;
+    }
+
     // ------------------------------------------------------------ plumbing
 
     /// <summary>Mirror of AppSettings, re-raised whenever a page needs a fresh look.</summary>
@@ -391,6 +443,9 @@ public partial class SettingsViewModel : PageViewModel
         OnPropertyChanged(nameof(KeyConfigured));
         OnPropertyChanged(nameof(KeyStateText));
         OnPropertyChanged(nameof(BackupPlanLogDir));
+        OnPropertyChanged(nameof(UpdateRepo));
+        OnPropertyChanged(nameof(CheckUpdateOnStartup));
+        OnPropertyChanged(nameof(RepoUrl));
         OnPropertyChanged(nameof(TargetText));
     }
 
@@ -411,7 +466,8 @@ public partial class SettingsViewModel : PageViewModel
         if (e.PropertyName is nameof(ApiKeyInput) or nameof(RefreshSeconds) or nameof(ShowPageHelp)
             or nameof(LogKeepDays) or nameof(WatchedServicesText) or nameof(AiBaseUrl)
             or nameof(AiModel) or nameof(AiTemperature) or nameof(AiSystemPrompt)
-            or nameof(AiAttachContext) or nameof(BackupPlanLogDir))
+            or nameof(AiAttachContext) or nameof(BackupPlanLogDir)
+            or nameof(UpdateRepo) or nameof(CheckUpdateOnStartup))
             ScheduleSave();
     }
 

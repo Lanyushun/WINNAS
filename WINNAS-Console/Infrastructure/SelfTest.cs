@@ -115,6 +115,27 @@ public static class SelfTest
                 await Task.CompletedTask;
             }), () => failures++);
 
+            // Version comparison is pure local logic: deliberately no network
+            // here, so this case still runs when GitHub is unreachable.
+            await Each("更新检查", log, () => Failures(async () =>
+            {
+                if (UpdateChecker.Compare("1.6.1", "v1.6.0") <= 0)
+                    throw new InvalidOperationException("本地比远端新时应返回正数");
+                if (UpdateChecker.Compare("1.5.0", "v1.6.0") >= 0)
+                    throw new InvalidOperationException("远端比本地新时应返回负数");
+                if (UpdateChecker.Compare("1.6.1", "1.6.1") != 0)
+                    throw new InvalidOperationException("相同版本应返回 0");
+                if (UpdateChecker.Compare("1.6.1", "release-2026") != int.MinValue)
+                    throw new InvalidOperationException("无法解析的标签应返回 int.MinValue");
+                if (!UpdateChecker.RepoUrl.StartsWith("https://github.com/", StringComparison.Ordinal))
+                    throw new InvalidOperationException("仓库地址异常：" + UpdateChecker.RepoUrl);
+                if (UpdateChecker.ContactEmail != "3457754861@qq.com")
+                    throw new InvalidOperationException("联系方式异常");
+
+                L($"     版本比较✓ 仓库={UpdateChecker.Repo} 联系={UpdateChecker.ContactEmail}");
+                await Task.CompletedTask;
+            }), () => failures++);
+
             session = WinnasSession.Open(profile);
             L("[OK] CIM 会话已建立");
 

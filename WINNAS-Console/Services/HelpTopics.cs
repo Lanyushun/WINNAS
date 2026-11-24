@@ -19,7 +19,7 @@ public sealed class HelpGroup
 /// </summary>
 public static class HelpTopics
 {
-    public static string Version => "1.6.0";
+    public static string Version => "1.6.1";
 
     public static List<HelpGroup> All { get; } = new()
     {
@@ -405,6 +405,32 @@ public static class HelpTopics
                         "共享页、存储页可以导出 CSV（UTF-8 带 BOM，Excel 直接双击打开不乱码）。\n" +
                         "日志页可以导出纯文本日志，便于贴给他人排查。\n\n" +
                         "导出的文件名带时间戳，不会覆盖上一份。",
+                },
+            },
+        },
+        new HelpGroup
+        {
+            Title = "关于与更新",
+            Glyph = "ⓘ",
+            Topics = new List<HelpTopic>
+            {
+                new()
+                {
+                    Title = "检查更新与联系方式",
+                    Body =
+                        "窗口顶部常驻 GitHub 链接（鼠标悬停能看到完整仓库地址和联系方式），旁边是「检查更新」按钮；" +
+                        "底部状态栏有可点击的邮箱 3457754861@qq.com，设置页的「关于」里也放了一份。\n\n" +
+                        "检查更新走 GitHub Releases API（/repos/Lanyushun/WINNAS/releases/latest），" +
+                        "比对当前版本与仓库最新 Release 的标签，支持 v1.6.1、1.6.1 两种写法。" +
+                        "发现新版本会弹窗并给出下载地址；本地版本比仓库已发布的还新，也会明说「远端 Release 尚未跟进」，" +
+                        "不会含糊地报一句「已是最新」。\n\n" +
+                        "到不了 api.github.com 时不会假装有结果：会区分超时、速率限制（未认证每小时 60 次）、" +
+                        "仓库没有 Release、返回内容异常，并让你直接打开发布页。程序只请求 API，网页链接一律交给" +
+                        "默认浏览器打开——有些网络里 API 通、github.com 网页反而不通，两边走的路不一样。\n\n" +
+                        "命令行：WINNAS.Console.exe --checkupdate（退出码 0=已是最新 / 1=有新版本 / 2=检查失败）。" +
+                        "设置页可以改更新仓库（owner/repo 或完整地址），也能开启「启动时自动检查更新」；" +
+                        "默认关闭，避免每次启动都联网，开启后也只在发现新版本时才提示。\n\n" +
+                        "反馈与建议：3457754861@qq.com",
                 },
             },
         },

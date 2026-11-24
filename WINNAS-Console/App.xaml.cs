@@ -27,6 +27,15 @@ public partial class App : Application
             return;
         }
 
+        // "--checkupdate" compares this build with the newest GitHub Release.
+        // Exit codes: 0 = up to date / no release, 1 = newer version exists,
+        // 2 = the API could not be reached or answered unexpectedly.
+        if (args.Any(a => string.Equals(a, "--checkupdate", StringComparison.OrdinalIgnoreCase)))
+        {
+            Shutdown(await UpdateCli.RunAsync());
+            return;
+        }
+
         if (args.Any(a => string.Equals(a, "--snapshot", StringComparison.OrdinalIgnoreCase)))
         {
             var code = await SnapshotCli.RunAsync();

@@ -98,6 +98,16 @@ public sealed class AppSettings
     [JsonPropertyName("timeToleranceSeconds")]
     public int TimeToleranceSeconds { get; set; } = 30;
 
+    // ------------------------------------------------------------- update
+
+    /// <summary>GitHub "owner/repo" (a full repository URL is accepted too).</summary>
+    [JsonPropertyName("updateRepo")]
+    public string UpdateRepo { get; set; } = "Lanyushun/WINNAS";
+
+    /// <summary>Check GitHub Releases once at startup; silent unless a new version exists.</summary>
+    [JsonPropertyName("checkUpdateOnStartup")]
+    public bool CheckUpdateOnStartup { get; set; }
+
     // ------------------------------------------------------------- window
 
     // Pure desktop UI state. SettingsSync strips these: window geometry on the

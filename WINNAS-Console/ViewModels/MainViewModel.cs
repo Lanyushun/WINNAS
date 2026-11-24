@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Security.Principal;
+using System.Text;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -38,7 +39,19 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty] private bool toastVisible;
 
+    [ObservableProperty] private bool isCheckingUpdate;
+
+    /// <summary>Short "· 已是最新 / · 有新版本" marker in the status bar.</summary>
+    [ObservableProperty] private string? updateHintText;
+
     public string VersionText => "v" + HelpTopics.Version;
+
+    // ---------------------------------------------------------- GitHub / update
+
+    public string GitHubLabel => "GitHub · " + UpdateChecker.Repo;
+    public string GitHubTip => UpdateChecker.ToolTip;
+    public string ContactEmail => UpdateChecker.ContactEmail;
+    public string CheckUpdateButtonText => IsCheckingUpdate ? "检查中…" : "检查更新";
 
     public MainViewModel()
     {
@@ -102,6 +115,10 @@ public partial class MainViewModel : ObservableObject
         IsAdmin = IsElevated();
         ActivityLog.Info("启动", $"WINNAS 控制台已启动（{VersionText}）",
             IsAdmin ? "以管理员权限运行" : "普通权限：写操作会失败");
+
+        // Opt-in and fire-and-forget: a slow or blocked GitHub must never hold
+        // up the window, and a routine "no update" must not produce a popup.
+        _ = AutoCheckUpdateAsync();
     }
 
     private ConnectionsViewModel? _connections;
@@ -384,6 +401,95 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void HideToast() => ToastVisible = false;
 
+    // ------------------------------------------------------- GitHub / update
+
+    [RelayCommand]
+    private void OpenGitHub() => ShowToast(Shell.OpenUrl(UpdateChecker.RepoUrl).Message);
+
+    [RelayCommand]
+    private void OpenReleases() => ShowToast(Shell.OpenUrl(UpdateChecker.ReleasesUrl).Message);
+
+    [RelayCommand]
+    private void ContactAuthor() => ShowToast(Shell.OpenUrl(UpdateChecker.MailUrl).Message);
+
+    /// <summary>Manual check: always shows the outcome, and offers the download page.</summary>
+    [RelayCommand]
+    private async Task CheckUpdate()
+    {
+        if (IsCheckingUpdate) return;
+        IsCheckingUpdate = true;
+        OnPropertyChanged(nameof(CheckUpdateButtonText));
+        OnPropertyChanged(nameof(GitHubLabel));
+        try
+        {
+            var info = await UpdateChecker.CheckAsync();
+            ActivityLog.Write(info.HasNew ? LogLevel.Warn : LogLevel.Ok, "更新", info.Message,
+                info.ReleaseUrl);
+
+            if (info.HasNew)
+            {
+                UpdateHintText = "· 有新版本 " + info.LatestVersion;
+                var text = new StringBuilder()
+                    .AppendLine($"发现新版本 {info.LatestVersion}（当前 v{info.CurrentVersion}）")
+                    .AppendLine($"发布页：{info.ReleaseUrl}");
+                if (!string.IsNullOrWhiteSpace(info.DownloadUrl))
+                    text.AppendLine($"下载：{info.DownloadUrl}");
+                if (!string.IsNullOrWhiteSpace(info.Notes))
+                    text.AppendLine().AppendLine(info.Notes);
+                text.AppendLine().Append("是否打开发布页下载？");
+                if (DialogService.Confirm(text.ToString(), "检查更新"))
+                    ShowToast(Shell.OpenUrl(info.DownloadUrl ?? info.ReleaseUrl ?? UpdateChecker.ReleasesUrl).Message);
+            }
+            else if (info.Kind is UpdateKind.Unreachable or UpdateKind.RateLimited or UpdateKind.BadResponse)
+            {
+                UpdateHintText = "· 检查失败";
+                DialogService.Warn(info.Message + "\n\n也可以直接打开发布页：" + UpdateChecker.ReleasesUrl,
+                    "检查更新");
+            }
+            else
+            {
+                UpdateHintText = info.Kind == UpdateKind.NoRelease ? "· 无 Release" : "· 已是最新";
+                ShowToast(info.Message);
+            }
+        }
+        finally
+        {
+            IsCheckingUpdate = false;
+            OnPropertyChanged(nameof(CheckUpdateButtonText));
+        }
+    }
+
+    /// <summary>
+    /// Startup check is opt-in and deliberately quiet: a monitoring tool that
+    /// pops a dialog on every launch is noise. Only a real new version is shown.
+    /// </summary>
+    private async Task AutoCheckUpdateAsync()
+    {
+        if (!AppState.Settings.CheckUpdateOnStartup) return;
+        try
+        {
+            var info = await UpdateChecker.CheckAsync();
+            if (info.HasNew)
+            {
+                UpdateHintText = "· 有新版本 " + info.LatestVersion;
+                ShowToast($"发现新版本 {info.LatestVersion}（当前 {VersionText}），点顶部「检查更新」查看详情");
+                ActivityLog.Warn("更新", "启动检查发现新版本", info.Message);
+            }
+            else if (info.Kind is UpdateKind.Unreachable or UpdateKind.RateLimited or UpdateKind.BadResponse)
+            {
+                ActivityLog.Warn("更新", "启动检查未成功", info.Message);
+            }
+            else
+            {
+                UpdateHintText = "· 已是最新";
+            }
+        }
+        catch (Exception ex)
+        {
+            ActivityLog.Warn("更新", "启动检查异常", OpResult.From(ex).Message);
+        }
+    }
+
     // ------------------------------------------------------ settings menu
 
     [RelayCommand]
@@ -419,6 +525,8 @@ public partial class MainViewModel : ObservableObject
             $"运行时：.NET {Environment.Version}\n" +
             $"当前被控端：{remote}\n" +
             $"本机：{Environment.MachineName}\n\n" +
+            $"项目仓库：{UpdateChecker.RepoUrl}\n" +
+            $"联系方式：{UpdateChecker.ContactEmail}\n\n" +
             $"配置文件：{AppState.FilePath}\n" +
             $"操作日志：{ActivityLog.Dir}",
             "关于 WINNAS 控制台");

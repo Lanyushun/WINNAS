@@ -51,7 +51,7 @@
                                Foreground="{DynamicResource TextMainBrush}"/>
                     <TextBlock Text="Windows NAS 控制台" FontSize="11"
                                Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0"/>
-                    <TextBlock Text="跑在台式机 · 管着那台 NAS" FontSize="10"
+                    <TextBlock Text="跑在笔记本 · 管着那台 NAS" FontSize="10"
                                Foreground="{DynamicResource TextMutedBrush}" Margin="0,1,0,0"/>
                 </StackPanel>
 
@@ -112,6 +112,20 @@
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- GitHub tip: hovering shows the repo URL and contact address -->
+                        <Button Style="{StaticResource LinkButton}" Command="{Binding OpenGitHubCommand}"
+                                ToolTip="{Binding GitHubTip, Mode=OneWay}" VerticalAlignment="Center"
+                                Margin="0,0,12,0">
+                            <TextBlock Text="{Binding GitHubLabel, Mode=OneWay}"
+                                       FontSize="11.5" FontWeight="SemiBold"/>
+                        </Button>
+
+                        <Button Content="{Binding CheckUpdateButtonText, Mode=OneWay}"
+                                Style="{StaticResource DefaultButton}" Command="{Binding CheckUpdateCommand}"
+                                IsEnabled="{Binding IsCheckingUpdate, Converter={StaticResource InvertBool}}"
+                                ToolTip="对比 GitHub 上最新的 Release 版本"
+                                Margin="0,0,8,0" MinWidth="86"/>
+
                         <Border Background="{DynamicResource InfoSoftBrush}" CornerRadius="6" Padding="10,5" Margin="0,0,10,0"
                                 Visibility="{Binding IsConnecting, Converter={StaticResource BoolVis}}">
                             <TextBlock Text="连接中..." FontSize="11.5" Foreground="{DynamicResource PrimaryDarkBrush}"/>
@@ -153,6 +167,11 @@
                                     <MenuItem Header="打开配置目录" Command="{Binding OpenConfigDirCommand}"/>
                                     <MenuItem Header="打开日志目录" Command="{Binding OpenActivityLogDirCommand}"/>
                                     <Separator/>
+                                    <MenuItem Header="检查更新…" Command="{Binding CheckUpdateCommand}"/>
+                                    <MenuItem Header="打开 GitHub 仓库" Command="{Binding OpenGitHubCommand}"/>
+                                    <MenuItem Header="打开 Releases 页" Command="{Binding OpenReleasesCommand}"/>
+                                    <MenuItem Header="联系作者（邮件）" Command="{Binding ContactAuthorCommand}"/>
+                                    <Separator/>
                                     <MenuItem Header="关于 WINNAS 控制台" Command="{Binding ShowAboutCommand}"/>
                                 </ContextMenu>
                             </Button.ContextMenu>
@@ -178,7 +197,7 @@
                         <TextBlock Grid.Column="0" FontSize="12.5" Foreground="{DynamicResource WarningTextBrush}"
                                    TextWrapping="Wrap" VerticalAlignment="Center">
                             <Run Text="现在没有连上任何被控端，页面是空的。" FontWeight="SemiBold"/>
-                            <Run Text="默认连本机；要点管那台 NAS，在连接页新建一条远程连接（DCOM 或 WinRM）。"/>
+                            <Run Text="默认连本机；要管那台 NAS，在连接页新建一条远程连接（远程 WMI）。"/>
                         </TextBlock>
                         <Button Grid.Column="1" Content="去配置连接" Style="{StaticResource DefaultButton}"
                                 Command="{Binding GoToConnectionsCommand}" Padding="10,6" Margin="14,0,0,0"/>
@@ -235,6 +254,15 @@
                     </StackPanel>
 
                     <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <Button Style="{StaticResource LinkButton}" Command="{Binding ContactAuthorCommand}"
+                                ToolTip="点击用默认邮件客户端发送邮件" Margin="0,0,10,0">
+                            <TextBlock Text="{Binding ContactEmail, Mode=OneWay}" FontSize="11"/>
+                        </Button>
+                        <Button Style="{StaticResource LinkButton}" Command="{Binding CheckUpdateCommand}"
+                                ToolTip="点击重新检查更新" Margin="0,0,10,0"
+                                Visibility="{Binding UpdateHintText, Converter={StaticResource StrVis}}">
+                            <TextBlock Text="{Binding UpdateHintText, Mode=OneWay}" FontSize="11"/>
+                        </Button>
                         <Border Style="{StaticResource Badge}" Background="{DynamicResource SuccessSoftBrush}" Margin="0,0,8,0"
                                 Visibility="{Binding IsAdmin, Converter={StaticResource BoolVis}}">
                             <TextBlock Style="{StaticResource BadgeText}" Text="管理员" Foreground="{DynamicResource SuccessTextBrush}"/>
